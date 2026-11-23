@@ -64,6 +64,27 @@ in
         description = "Tailnet machine streaming the agents' browser; the web UI's Browser tab frames it.";
       };
     };
+    bot = {
+      enable = lib.mkEnableOption ''
+        an outside chat bot talking to Eldar as the admin (cmd/bot-bridge): MCP
+        over Tailscale Funnel with a bearer token, plus signed webhooks out. It
+        reaches only the supervisor's bot socket (chat and counts), never the
+        admin API, so it can't approve anything'';
+      hostname = lib.mkOption {
+        type = lib.types.str;
+        default = "eldar-bot";
+        description = "Tailnet machine name (needs the funnel node attribute). Its auth key goes in /var/lib/eldar-bot/authkey once.";
+      };
+      source = lib.mkOption {
+        type = lib.types.str;
+        default = "bot";
+        description = "Label on its chat messages ([via <source>]).";
+      };
+      environmentFile = lib.mkOption {
+        type = lib.types.str;
+        description = "BOT_TOKEN (required), BOT_WEBHOOK_URL and BOT_WEBHOOK_SECRET (optional).";
+      };
+    };
     hostsFile = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -171,6 +192,50 @@ in
     users.users.supervisor-web = lib.mkIf cfg.web.enable { isSystemUser = true; group = "supervisor-web"; };
     users.groups.supervisor-web = lib.mkIf cfg.web.enable { };
 
+    # The bot bridge: its own user, in the bot socket's group only (never
+    # supervisor-admin).
+    users.users.eldar-bot = lib.mkIf cfg.bot.enable { isSystemUser = true; group = "eldar-bot"; };
+    users.groups.eldar-bot = lib.mkIf cfg.bot.enable { };
+    users.groups.supervisor-bot = lib.mkIf cfg.bot.enable { members = [ "eldar-bot" ]; };
+    systemd.services.eldar-bot = lib.mkIf cfg.bot.enable {
+      description = "Bot bridge: an outside chat bot talking to Eldar (MCP over Funnel, webhooks out)";
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" "supervisor.service" ];
+      environment = {
+        BOT_HOSTNAME = cfg.bot.hostname;
+        BOT_STATE_DIR = "/var/lib/eldar-bot";
+        BOT_SOCKET = "/run/supervisor/bot.sock";
+        BOT_SOURCE = cfg.bot.source;
+        HOME = "/var/lib/eldar-bot";
+      };
+      serviceConfig = {
+        ExecStart = "${cfg.package}/bin/bot-bridge";
+        User = "eldar-bot";
+        Group = "eldar-bot";
+        SupplementaryGroups = [ "supervisor-bot" ];
+        EnvironmentFile = cfg.bot.environmentFile;
+        StateDirectory = "eldar-bot";
+        StateDirectoryMode = "0700";
+        Restart = "always";
+        RestartSec = 5;
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictNamespaces = true;
+        RestrictSUIDSGID = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        SystemCallArchitectures = "native";
+        CapabilityBoundingSet = "";
+      };
+    };
+
     # The host agent (supervisor/server/hostagent.go): runs in the admin's
     # user manager, so only while they have a session (no lingering).
     systemd.user.services.supervisor-host-agent = lib.mkIf (cfg.hostAgent.user != null) {
@@ -247,6 +312,9 @@ in
         SUPERVISOR_AGENT_USER = "eldar";
         SUPERVISOR_HOST_KEYS = "/run/secrets/remote-hosts";
         HOME = state;
+      } // lib.optionalAttrs cfg.bot.enable {
+        SUPERVISOR_BOT_SOCKET = "/run/supervisor/bot.sock";
+        SUPERVISOR_BOT_GROUP = "supervisor-bot";
       } // lib.optionalAttrs (cfg.hostsFile != null) {
         SUPERVISOR_HOSTS = cfg.hostsFile;
       } // lib.optionalAttrs (cfg.ambientFile != null) {
@@ -263,7 +331,8 @@ in
         ExecStart = "${lib.getExe cfg.package} serve";
         User = "supervisor";
         Group = "supervisor";
-        SupplementaryGroups = [ "supervisor-admin" ]; # to hand the admin socket to the group
+        # to hand the admin (and bot) sockets to their groups
+        SupplementaryGroups = [ "supervisor-admin" ] ++ lib.optional cfg.bot.enable "supervisor-bot";
         EnvironmentFile = lib.optional (cfg.environmentFile != null) "-${cfg.environmentFile}";
         StateDirectory = "supervisor";
         StateDirectoryMode = "0700";

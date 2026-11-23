@@ -75,7 +75,7 @@ VM_USER=nixos $VM ssh 'set -e; cd eldar-os; export NIX_CONFIG="experimental-feat
   rm /tmp/dk
   printf "%s\n" "canary: secrets-pipeline-ok" "supervisor-env: \"\"" "supervisor-web-env: \"\"" \
     "github-app-key: \"\"" "apply-webhook-secret: \"\"" "data-disk-key: \"$dk\"" \
-    > /tmp/test-secrets.yaml
+    "bot-env: \"BOT_TOKEN=e2e-dummy-token-not-a-real-secret-0123\"" > /tmp/test-secrets.yaml
   nix run --inputs-from . nixpkgs#sops -- encrypt --age "$recipient" /tmp/test-secrets.yaml \
     | sudo tee /mnt/var/lib/eldar-os/secrets/eldar-os.yaml >/dev/null
   sync'

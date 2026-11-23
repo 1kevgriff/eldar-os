@@ -26,6 +26,8 @@ type Config struct {
 	Listen      string // agent-facing HTTP, e.g. 10.42.0.1:9100
 	AdminSocket string // admin API (TUI, web UI)
 	AdminGroup  string // group allowed to connect to the admin socket
+	BotSocket   string // bot API (bot.go): chat and counts only; "" = off
+	BotGroup    string // group allowed to connect to the bot socket
 
 	PolicyPath, AuditPath, SettingsPath, CronsPath, CacheDir string
 
@@ -188,9 +190,26 @@ func (s *Supervisor) Run(ctx context.Context) error {
 		ReadHeaderTimeout: 30 * time.Second}
 	adminSrv := &http.Server{Handler: s.adminHandler(), ReadHeaderTimeout: 30 * time.Second}
 
-	errc := make(chan error, 2)
+	// The bot API gets its own socket and group, so whatever can reach it
+	// still can't reach the admin API (approvals, grants, credentials).
+	var botSrv *http.Server
+	var botLn net.Listener
+	if s.cfg.BotSocket != "" {
+		if botLn, err = listenAdmin(s.cfg.BotSocket, s.cfg.BotGroup); err != nil {
+			agentLn.Close()
+			adminLn.Close()
+			return err
+		}
+		botSrv = &http.Server{Handler: s.botHandler(), ReadHeaderTimeout: 30 * time.Second}
+	}
+
+	errc := make(chan error, 3)
 	go func() { errc <- agentSrv.Serve(agentLn) }()
 	go func() { errc <- adminSrv.Serve(adminLn) }()
+	if botSrv != nil {
+		go func() { errc <- botSrv.Serve(botLn) }()
+		logf("bot API on %s (group %s)", s.cfg.BotSocket, s.cfg.BotGroup)
+	}
 	logf("agent API on %s; admin API on %s (group %s)", s.cfg.Listen, s.cfg.AdminSocket, s.cfg.AdminGroup)
 
 	select {
@@ -201,6 +220,9 @@ func (s *Supervisor) Run(ctx context.Context) error {
 	defer cancel()
 	agentSrv.Shutdown(shut)
 	adminSrv.Shutdown(shut)
+	if botSrv != nil {
+		botSrv.Shutdown(shut)
+	}
 	if errors.Is(err, http.ErrServerClosed) {
 		err = nil
 	}

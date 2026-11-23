@@ -21,8 +21,19 @@
       streamHost = config.eldar-os.tailnetProxies.chrome.hostname; # the Browser tab
       environmentFile = config.sops.secrets.supervisor-web-env.path;
     };
+    # Kevin's Grok bot hands Eldar tasks over MCP and hears back by webhook;
+    # it can't approve anything (cmd/bot-bridge).
+    bot = {
+      enable = true;
+      source = "grokbot";
+      environmentFile = config.sops.secrets.bot-env.path;
+    };
   };
-  # Ben watches the VM's Chrome (modules/vm-chrome.nix) from his tailnet.
+  sops.secrets.bot-env = {
+    owner = "eldar-bot";
+    restartUnits = [ "eldar-bot.service" ];
+  };
+  # Kevin watches the VM's Chrome (modules/vm-chrome.nix) from his tailnet.
   eldar-os.tailnetProxies.chrome = {
     hostname = "eldar-chrome";
     target = "http://${config.eldar-os.eldarVm.address}:3000";

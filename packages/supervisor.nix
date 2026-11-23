@@ -6,7 +6,7 @@
   version = "0.1.0";
   src = lib.cleanSource ../supervisor;
   vendorHash = "sha256-O0kJx0qwRR/CrmTY9rDOtk51yeUtmC7oC6MyNSymPiA=";
-  subPackages = [ "cmd/supervisor" "cmd/apply-hook" "cmd/tailnet-proxy" ];
+  subPackages = [ "cmd/supervisor" "cmd/apply-hook" "cmd/tailnet-proxy" "cmd/bot-bridge" ];
   env.CGO_ENABLED = 0;
   ldflags = [ "-s" "-w" ];
   # No tests in the build: they add about a minute to every rebuild of the

@@ -19,6 +19,8 @@ import (
 //	SUPERVISOR_LISTEN           agent-facing address (default 10.42.0.1:9100)
 //	SUPERVISOR_ADMIN_SOCKET     admin socket (default /run/supervisor/admin.sock)
 //	SUPERVISOR_ADMIN_GROUP      group that may open it (default supervisor-admin)
+//	SUPERVISOR_BOT_SOCKET       bot API socket (server/bot.go); unset = off
+//	SUPERVISOR_BOT_GROUP        group that may open it (default supervisor-bot)
 //	SUPERVISOR_STATE_DIR        audit log, settings, crons, credential cache
 //	SUPERVISOR_POLICY           policy file
 //	SUPERVISOR_AGENT_HOST       Eldar's VM (default 10.42.0.2)
@@ -50,7 +52,9 @@ func runServe(args []string) {
 		Listen:                env("SUPERVISOR_LISTEN", "10.42.0.1:9100"),
 		AdminSocket:           env("SUPERVISOR_ADMIN_SOCKET", "/run/supervisor/admin.sock"),
 		AdminGroup:            env("SUPERVISOR_ADMIN_GROUP", "supervisor-admin"),
-		PolicyPath:            env("SUPERVISOR_POLICY", state+"/policy.yaml"),
+		BotSocket:             os.Getenv("SUPERVISOR_BOT_SOCKET"),
+		BotGroup:              env("SUPERVISOR_BOT_GROUP", "supervisor-bot"),
+		PolicyPath:           env("SUPERVISOR_POLICY", state+"/policy.yaml"),
 		AuditPath:             state + "/audit.jsonl",
 		SettingsPath:          state + "/settings.json",
 		CronsPath:             state + "/authorized-crons.json",
