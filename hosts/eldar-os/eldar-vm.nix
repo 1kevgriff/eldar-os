@@ -280,6 +280,7 @@
       plannotator-tui
       # runtimes
       nodejs_22 typescript eslint bun go
+      dotnet-sdk_10 # SOS (SoS.v2 targets net10.0)
       (python3.withPackages (ps: with ps; [ numpy scipy pillow rectpack ]))
       # cloud and dev CLIs
       awscli2 kubectl heroku wrangler duckdb codex
