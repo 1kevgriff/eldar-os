@@ -15,7 +15,7 @@ TARGET=/dev/disk/by-id/virtio-eldar-os-root
 KEY=/dev/disk/by-id/virtio-lukskey
 LUKS=/dev/disk/by-partlabel/disk-main-luks
 ESP=/dev/disk/by-partlabel/disk-main-ESP
-DISK_BYTES=500107862016
+DISK_BYTES=960197124096
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 
 [ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }

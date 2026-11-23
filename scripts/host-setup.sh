@@ -9,9 +9,9 @@
 # Writes to no disk. USER_NAME defaults to the user who ran sudo.
 set -euo pipefail
 
-SERIAL=S5H7NC0MB49704F   # Samsung 970 EVO 500GB — the eldar-os disk
-DISK=/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_500GB_${SERIAL}
-DISK_BYTES=500107862016
+SERIAL=S2L9NX0J307636    # Samsung PM953 960GB (dbmart) — the eldar-os disk
+DISK=/dev/disk/by-id/nvme-SAMSUNG_MZ1LV960HCJH-000MU_${SERIAL}
+DISK_BYTES=960197124096
 USER_NAME=${USER_NAME:-${SUDO_USER:-}}
 DRY_RUN=
 [ "${1:-}" = --dry-run ] && DRY_RUN=1
