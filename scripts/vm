@@ -12,10 +12,10 @@
 #   scripts/vm console    attach to the serial console (Ctrl-] to leave)
 #   scripts/vm log        tail the serial log
 #   scripts/vm authorize  installer only: put our SSH key in via the serial console
-#   scripts/vm ssh [cmd]  ssh in as ben (VM_USER=nixos while in the installer)
+#   scripts/vm ssh [cmd]  ssh in as kevin (VM_USER=nixos while in the installer)
 #   scripts/vm eldar [cmd]
 #                         into Eldar's VM (through eldar-os) as eldar, running
-#                         herdr by default: Eldar's sessions, live (ELDAR_USER=ben)
+#                         herdr by default: Eldar's sessions, live (ELDAR_USER=kevin)
 #
 #   scripts/vm --dry-run <cmd>
 #                         same, against a sparse disk image the size of the
@@ -67,7 +67,7 @@ VARS=$STATE/OVMF_VARS.fd
 die() { echo "vm: $*" >&2; exit 1; }
 running() { systemctl --user is-active --quiet "$UNIT"; }
 
-# Processes started before host-setup.sh added ben to `kvm` (this shell, the
+# Processes started before host-setup.sh added kevin to `kvm` (this shell, the
 # systemd user manager) don't have the group yet; `sg` picks it up from
 # /etc/group without a re-login.
 # QEMU runs under the user manager, not this shell, so whether this shell can
@@ -199,7 +199,7 @@ case "${1:-}" in
   status) systemctl --user --no-pager status "$UNIT" | head -5 || true ;;
   console) exec socat -,raw,echo=0,escape=0x1d "UNIX-CONNECT:$STATE/serial.sock" ;;
   log) exec tail -n 50 -f "$STATE/serial.log" ;;
-  ssh) shift; user=ben; [ "${VM_USER:-}" ] && user=$VM_USER
+  ssh) shift; user=kevin; [ "${VM_USER:-}" ] && user=$VM_USER
        exec ssh -i "$SSH_KEY" -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "$user@127.0.0.1" "$@" ;;
   eldar) shift; [ $# -gt 0 ] || set -- herdr
        # The VM's host key is pinned on first use, in our own known_hosts.

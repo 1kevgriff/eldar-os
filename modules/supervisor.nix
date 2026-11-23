@@ -129,7 +129,7 @@ in
     };
     runAs = lib.mkOption {
       type = lib.types.str;
-      default = "ben";
+      default = "kevin";
       description = "User commands run as in Eldar's VM (privileged there; not the agent).";
     };
   };

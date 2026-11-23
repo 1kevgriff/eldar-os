@@ -15,8 +15,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 VM=scripts/vm
-STAGING=benjaminwood/eldar-os-staging
-SECRETS=benjaminwood/eldar-os-secrets
+STAGING=1kevgriff/eldar-os
+SECRETS=1kevgriff/eldar-os-secrets
 GITHUB_HOST_KEY="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
 
 echo "== deploy keys"
