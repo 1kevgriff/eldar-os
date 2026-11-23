@@ -50,6 +50,9 @@
     extraGroups = [ "wheel" "networkmanager" ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
+      # dbmart, the host eldar-os runs on as a VM (scripts/vm ssh, verify)
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHVM2vOGZjkIzBRcnwt49BgCdeRDAEv5o4uLz7rC4j/P administrator-dbmart -> eldar-os"
+      # Kevin's PC, over the tailnet
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwOC/riI1EHGgX9P/gTedDS7XV16QIzSzmWO9w9i5rt kevin@shedquarters-pc"
     ];
   };
