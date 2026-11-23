@@ -266,6 +266,12 @@ in
   # than fail.
   systemd.services."microvm@eldar".unitConfig.ConditionPathExists = "/dev/kvm";
   systemd.services."microvm@eldar".unitConfig.RequiresMountsFor = [ cfg.imageDir ];
+  # The runner creates missing images but not their directory. Make it once
+  # the mount is up (tmpfiles runs too early for a nofail mount like /data),
+  # as root ("+"), owned like microvm's own /var/lib/microvms/<name>.
+  systemd.services."microvm@eldar".serviceConfig.ExecStartPre = [
+    "+${pkgs.coreutils}/bin/install -d -m 775 -o microvm -g kvm ${cfg.imageDir}"
+  ];
 
   # --- the VM -----------------------------------------------------------------
 
