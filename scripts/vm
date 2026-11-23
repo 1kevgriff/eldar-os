@@ -31,6 +31,10 @@ set -euo pipefail
 
 SERIAL=S2L9NX0J307636
 DISK_BYTES=960197124096
+# The data disk (/data inside eldar-os, where Eldar's VM images live), passed
+# through as virtio serial "eldar-data" (hosts/eldar-os/data-disk.nix).
+DATA_SERIAL=244432808033
+DATA_BYTES=1000204886016
 BASE=${ELDAR_OS_VM_STATE:-$HOME/.local/share/eldar-os-vm}
 ISO=$BASE/iso/nixos-minimal.iso
 OVMF_CODE=/usr/share/OVMF/OVMF_CODE_4M.fd
@@ -44,6 +48,7 @@ if [ "${1:-}" = --dry-run ]; then
   DRY_RUN=1
   STATE=$BASE/dry-run
   DISK=$STATE/disk.raw
+  DATA_DISK=$STATE/data.raw
   UNIT=eldar-os-vm-dry
   SSH_PORT=2223
   VNC=1
@@ -51,6 +56,7 @@ else
   DRY_RUN=
   STATE=$BASE
   DISK=/dev/disk/by-id/nvme-SAMSUNG_MZ1LV960HCJH-000MU_${SERIAL}
+  DATA_DISK=/dev/disk/by-id/nvme-WD_Blue_SN580_1TB_${DATA_SERIAL}
   UNIT=eldar-os-vm
   SSH_PORT=2222
   VNC=0
@@ -64,11 +70,11 @@ running() { systemctl --user is-active --quiet "$UNIT"; }
 # Processes started before host-setup.sh added ben to `kvm` (this shell, the
 # systemd user manager) don't have the group yet; `sg` picks it up from
 # /etc/group without a re-login.
+# QEMU runs under the user manager, not this shell, so whether this shell can
+# open /dev/kvm says nothing about QEMU: wrap whenever the user is in `kvm`.
 KVM_WRAP=()
-if ! { [ -r /dev/kvm ] && [ -w /dev/kvm ]; }; then
-  if id -nG "$USER" | tr ' ' '\n' | grep -qx kvm || getent group kvm | cut -d: -f4 | tr ',' '\n' | grep -qx "$USER"; then
-    KVM_WRAP=(sg kvm -c)
-  fi
+if id -nG "$USER" | tr ' ' '\n' | grep -qx kvm || getent group kvm | cut -d: -f4 | tr ',' '\n' | grep -qx "$USER"; then
+  KVM_WRAP=(sg kvm -c)
 fi
 
 check_disk() {
@@ -76,9 +82,15 @@ check_disk() {
   if [ "$DRY_RUN" ]; then
     [ -e "$DISK" ] || { truncate -s "$DISK_BYTES" "$DISK"; echo "created sparse $DISK"; }
     [ "$(stat -c %s "$DISK")" = "$DISK_BYTES" ] || die "size mismatch on $DISK"
+    [ -e "$DATA_DISK" ] || { truncate -s "$DATA_BYTES" "$DATA_DISK"; echo "created sparse $DATA_DISK"; }
     return
   fi
-  local real
+  check_block "$DISK" "$SERIAL" "$DISK_BYTES"
+  check_block "$DATA_DISK" "$DATA_SERIAL" "$DATA_BYTES"
+}
+
+check_block() {  # $1 = by-id path, $2 = serial, $3 = size in bytes
+  local DISK=$1 SERIAL=$2 DISK_BYTES=$3 real
   real=$(readlink -f "$DISK") || die "target disk $DISK not found"
   [ "$(udevadm info -q property "$real" | sed -n 's/^ID_SERIAL_SHORT=//p')" = "$SERIAL" ] || die "serial mismatch on $real"
   [ "$(lsblk -bdno SIZE "$real")" = "$DISK_BYTES" ] || die "size mismatch on $real"
@@ -126,6 +138,8 @@ launch() {  # $1 = install|start
     -drive "if=pflash,format=raw,file=$VARS"
     -drive "file=$DISK,format=raw,if=none,id=root,cache=none,aio=io_uring,discard=unmap"
     -device virtio-blk-pci,drive=root,serial=eldar-os-root,bootindex=1
+    -drive "file=$DATA_DISK,format=raw,if=none,id=data,cache=none,aio=io_uring,discard=unmap"
+    -device virtio-blk-pci,drive=data,serial=eldar-data
     -netdev "user,id=n0,hostfwd=tcp:127.0.0.1:${SSH_PORT}-:22"
     -device virtio-net-pci,netdev=n0
     -chardev "socket,id=ser0,path=$STATE/serial.sock,server=on,wait=off,logfile=$STATE/serial.log"
@@ -159,8 +173,8 @@ launch() {  # $1 = install|start
 reset() {
   [ "$DRY_RUN" ] || die "reset only applies to --dry-run"
   running && die "stop it first"
-  rm -f "$DISK" "$VARS" "$STATE/serial.log"
-  echo "dry-run disk and firmware vars removed (key kept)"
+  rm -f "$DISK" "$DATA_DISK" "$VARS" "$STATE/serial.log"
+  echo "dry-run disks and firmware vars removed (key kept)"
 }
 
 monitor() { echo "$1" | socat - "UNIX-CONNECT:$STATE/monitor.sock" >/dev/null; }

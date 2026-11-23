@@ -288,11 +288,13 @@ The 1TB drive held the previous Ubuntu install, which steps 11 and 12 read
 from (it was mounted read-only at `/mnt/ubuntu` then). Once everything worth
 keeping was copied off, it became the data disk (`hosts/eldar-os/data-disk.nix`):
 one LUKS2 partition around XFS, mounted at `/data`, unlocked at boot by the
-sops secret `data-disk-key`. Formatted once, by serial, from the running
-system (the key is generated into RAM, never printed):
+sops secret `data-disk-key`. On dbmart eldar-os runs as a VM, and
+`scripts/vm` passes the WD SN580 (serial 244432808033) through as virtio
+serial `eldar-data`. Formatted once, from the running eldar-os (the key is
+generated into RAM, never printed):
 
 ```bash
-T=/dev/disk/by-id/nvme-Samsung_SSD_970_EVO_1TB_S5H9NG0N204821J
+T=/dev/disk/by-id/virtio-eldar-data
 K=/run/user/$UID/datadisk/key
 install -d -m 700 ${K%/*}; (umask 077; tr -dc A-Za-z0-9 </dev/urandom | head -c 64 >$K)
 sudo wipefs -a $T-part*; sudo wipefs -a $T; sudo blkdiscard -f $T

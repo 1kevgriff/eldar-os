@@ -12,6 +12,9 @@ set -euo pipefail
 SERIAL=S2L9NX0J307636    # Samsung PM953 960GB (dbmart) — the eldar-os disk
 DISK=/dev/disk/by-id/nvme-SAMSUNG_MZ1LV960HCJH-000MU_${SERIAL}
 DISK_BYTES=960197124096
+DATA_SERIAL=244432808033 # WD Blue SN580 1TB (dbmart) — the data disk, passed through by scripts/vm
+DATA_DISK=/dev/disk/by-id/nvme-WD_Blue_SN580_1TB_${DATA_SERIAL}
+DATA_BYTES=1000204886016
 USER_NAME=${USER_NAME:-${SUDO_USER:-}}
 DRY_RUN=
 [ "${1:-}" = --dry-run ] && DRY_RUN=1
@@ -27,6 +30,11 @@ if [ -z "$DRY_RUN" ]; then
   [ "$(lsblk -bdno SIZE "$real")" = "$DISK_BYTES" ] || { echo "size mismatch"; exit 1; }
   if lsblk -no MOUNTPOINTS "$real" | grep -q .; then echo "target disk is mounted"; exit 1; fi
   echo "target: $DISK -> $real (ok)"
+  real=$(readlink -f "$DATA_DISK")
+  [ "$(udevadm info -q property "$real" | sed -n 's/^ID_SERIAL_SHORT=//p')" = "$DATA_SERIAL" ] || { echo "data disk serial mismatch"; exit 1; }
+  [ "$(lsblk -bdno SIZE "$real")" = "$DATA_BYTES" ] || { echo "data disk size mismatch"; exit 1; }
+  if lsblk -no MOUNTPOINTS "$real" | grep -q .; then echo "data disk is mounted"; exit 1; fi
+  echo "data: $DATA_DISK -> $real (ok)"
 fi
 
 # 1. QEMU, UEFI firmware, and the tools scripts/vm uses
@@ -39,11 +47,13 @@ if [ -z "$DRY_RUN" ]; then
   cat > /etc/udev/rules.d/99-nixos-target-disk.rules <<EOF
 # eldar-os disk: owned by ${USER_NAME} so QEMU can use it without root. Only this serial.
 SUBSYSTEM=="block", ENV{ID_SERIAL_SHORT}=="${SERIAL}", OWNER="${USER_NAME}", GROUP="${USER_NAME}", MODE="0600"
+# Its data disk, passed through the same way.
+SUBSYSTEM=="block", ENV{ID_SERIAL_SHORT}=="${DATA_SERIAL}", OWNER="${USER_NAME}", GROUP="${USER_NAME}", MODE="0600"
 EOF
   udevadm control --reload
   udevadm trigger --subsystem-match=block --action=change
   udevadm settle
-  ls -lL "$DISK"
+  ls -lL "$DISK" "$DATA_DISK"
 fi
 
 # 3. KVM: group membership for future logins, ACL for sessions already running
