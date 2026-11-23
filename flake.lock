@@ -23,15 +23,15 @@
     "dotfiles": {
       "flake": false,
       "locked": {
-        "lastModified": 1793073740,
-        "narHash": "sha256-R78ycY6OPM6/4kUKAtPgOPOOVmq7ObOlZH/yiQZMOKg=",
-        "owner": "benjaminwood",
+        "lastModified": 1795464925,
+        "narHash": "sha256-JMs3NrSGI2TRKASatVycLsZ0Ia4DFG3vPvuyVoDdRys=",
+        "owner": "1kevgriff",
         "repo": "dotfiles",
-        "rev": "503dda12d2a9a022d8d0b2b3cd7217beac4db74a",
+        "rev": "bae5054786f0d99c342cce9dad371fd1e76adee3",
         "type": "github"
       },
       "original": {
-        "owner": "benjaminwood",
+        "owner": "1kevgriff",
         "ref": "main",
         "repo": "dotfiles",
         "type": "github"

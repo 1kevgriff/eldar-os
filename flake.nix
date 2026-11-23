@@ -15,9 +15,9 @@
       url = "github:microvm-nix/microvm.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Ben's dotfiles (chezmoi source), shared with his other machines.
+    # The agent user eldar's dotfiles (chezmoi source); public, no secrets.
     dotfiles = {
-      url = "github:benjaminwood/dotfiles/main";
+      url = "github:1kevgriff/dotfiles/main";
       flake = false;
     };
   };
