@@ -62,7 +62,8 @@ VM_USER=nixos $VM ssh 'set -e; cd eldar-os; export NIX_CONFIG="experimental-feat
   sudo ssh-keygen -q -t ed25519 -N "" -C eldar-os-e2e -f /mnt/etc/ssh/ssh_host_ed25519_key
   recipient=$(nix run --inputs-from . nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub)
   printf "%s\n" "canary: secrets-pipeline-ok" "supervisor-env: \"\"" "supervisor-web-env: \"\"" \
-    "github-app-key: \"\"" "apply-webhook-secret: \"\"" "remote-hosts:" "  mac: \"\"" > /tmp/test-secrets.yaml
+    "github-app-key: \"\"" "apply-webhook-secret: \"\"" "data-disk-key: \"\"" "bluebubbles-password: \"\"" \
+    "remote-hosts:" "  mac: \"\"" "  quickbeam: \"\"" "  mac-bridge: \"\"" > /tmp/test-secrets.yaml
   nix run --inputs-from . nixpkgs#sops -- encrypt --age "$recipient" /tmp/test-secrets.yaml \
     | sudo tee /mnt/var/lib/eldar-os/secrets/eldar-os.yaml >/dev/null
   sync'
