@@ -3,11 +3,11 @@
 { config, ... }:
 {
   eldar-os.apply = {
-    repo = "git@github.com:benjaminwood/eldar-os-staging.git";
-    secretsRepo = "git@github.com:benjaminwood/eldar-os-secrets.git";
+    repo = "git@github.com:1kevgriff/eldar-os.git";
+    secretsRepo = "git@github.com:1kevgriff/eldar-os-secrets.git";
     allowedSigners = ../../trust/allowed_signers;
     gpgKeys = ../../trust/github-web-flow.gpg;
-    triggerUsers = [ "ben" ];
+    triggerUsers = [ "kevin" ];
     healthChecks = [
       ''test "$(cat /run/secrets/canary)" = secrets-pipeline-ok''
     ];

@@ -2,12 +2,10 @@
 # Machine-specific: a fork picks its own tools.
 { dotfiles, config, ... }:
 {
-  # Eldar gets most of the machine (Ryzen 9 3900X: 24 threads, 64 GB):
-  # its projects' dev stacks (databases, search, Rails, Phoenix) run in here.
-  # All 24 threads (vCPUs are scheduled, not reserved), and all but 16 GB of
-  # RAM: the host keeps room for its own services (Home Assistant, Atuin,
-  # Docker), the supervisor and the virtiofs daemons.
-  eldar-os.eldarVm.vcpu = 24;
+  # Eldar gets most of eldar-os (on dbmart a VM with 8 vCPUs and 40 GB, of
+  # a 16-thread, 62 GiB host): its projects' dev stacks run in here. eldar-os
+  # keeps room for Docker, the supervisor and the virtiofs daemons.
+  eldar-os.eldarVm.vcpu = 8;
   # Eldar's identity and Claude settings live in its workspace repo (private).
   eldar-os.eldarVm.claudeLinks = {
     "CLAUDE.md" = "user/CLAUDE.md";
@@ -19,7 +17,7 @@
     command = "/run/current-system/sw/bin/npx";
     args = [ "-y" "@playwright/mcp@0.0.83" "--cdp-endpoint" "http://127.0.0.1:19222" "--viewport-size" "1280,800" ];
   };
-  eldar-os.eldarVm.memMiB = 49152;
+  eldar-os.eldarVm.memMiB = 32768;
   # Eldar's disks are on the data disk (data-disk.nix), with room for its dev stacks.
   eldar-os.eldarVm.imageDir = "/data/microvms/eldar";
   eldar-os.eldarVm.homeMiB = 870400; # 850 GiB
@@ -38,86 +36,6 @@
         args = [ "channel" name ];
       });
     });
-    # Quickbeam, the family agent (below): its repo, Claude config, settings
-    # and only MCP server.
-    quickbeam = rec {
-      state = "/var/lib/quickbeam";
-      repo = "/var/lib/quickbeam/repo";
-      config = "/var/lib/quickbeam/claude";
-      prompt = "You have a shell (Bash), sandboxed: no network, and you can write only your repo and ${state}/work, where data you process belongs (keep it out of the repo, which is your memory). Python (pandas, matplotlib), duckdb, sqlite3, jq and rg are installed. Eldar lends you commands, which act on real things such as a budget: they are on your PATH, and `supervisor tool --list` says what each is for. For anything sizeable, write a command's output to a file in work/ and analyse it with code rather than reading it whole.";
-      mcp = pkgs.writeText "quickbeam.mcp.json" (builtins.toJSON {
-        mcpServers.imessage = { command = "/run/current-system/sw/bin/supervisor"; args = [ "channel" "imessage" ]; };
-      });
-      settings = pkgs.writeText "quickbeam-settings.json" (builtins.toJSON {
-        permissions.allow = [ "mcp__imessage__reply" "mcp__imessage__react" "mcp__imessage__typing" "mcp__imessage__history" "mcp__imessage__contacts"
-          "Read" "Edit" "Write" "Glob" "Grep" "WebSearch" "WebFetch" "Bash"
-          # Reminders and recurring jobs (they last as long as its session) and a to-do list.
-          "CronCreate" "CronList" "CronDelete" "TodoWrite" ];
-        # Its shell: every command in bubblewrap, never outside it. It sees
-        # none of Eldar's home, the shared /tmp (Eldar's temporary files and
-        # browser sockets; it has its own tmp/), /run/user (herdr's and
-        # Docker's sockets), the system's sockets, its own Claude credentials
-        # or the Nix daemon; it has no network (Claude itself still does); it
-        # writes only its repo, work/ and tmp/. Sockets are all-or-nothing on
-        # Linux, so hiding their paths is what keeps it from them; its one way
-        # out is the tools relay's socket.
-        sandbox = {
-          enabled = true; failIfUnavailable = true; allowUnsandboxedCommands = false; autoAllowBashIfSandboxed = true;
-          filesystem = {
-            allowWrite = [ "${state}/work" ];
-            denyRead = [ "/home/eldar" "/tmp" "/dev/shm" "/run/user" "/run/dbus" "/run/systemd" "/run/udev" "/run/ssh-unix-local"
-              config "/nix/var/nix/daemon-socket" "/nix/var/nix/gc-socket" ];
-            denyWrite = [ "${state}/bin" "${state}/toolbox" "${state}/run" config ];
-          };
-          network = { allowAllUnixSockets = true; allowedDomains = [ ]; };
-        };
-        # Programs: the system's, its toolbox (a Nix profile Eldar adds to)
-        # and the commands Eldar lends it (stubs from the tools relay).
-        env.PATH = "${state}/bin:${state}/toolbox/profile/bin:/run/wrappers/bin:/run/current-system/sw/bin";
-        # Its session's ID goes to herdr (how the supervisor knows this is
-        # Quickbeam's tab) through the tools relay: herdr's socket controls
-        # every pane, so the quickbeam user doesn't get to reach it.
-        # And it starts knowing what Eldar lends it right now (a SessionStart
-        # hook's output joins its context).
-        hooks.SessionStart = [{ matcher = "^(startup|resume|clear|compact|fork)$";
-          hooks = [
-            { type = "command"; command = "/run/current-system/sw/bin/supervisor tool --herdr-session"; timeout = 10; }
-            { type = "command"; timeout = 10; command = "${pkgs.writeShellScript "quickbeam-lent-tools" ''
-              echo "Commands Eldar lends you right now (on your PATH; \`supervisor tool --list\` shows the current list):"
-              /run/current-system/sw/bin/supervisor tool --list
-            ''}"; }
-          ]; }];
-      });
-      # Starts its Claude as the quickbeam user (Eldar's watchdog runs it
-      # through sudo, in Quickbeam's herdr tab): its flags, its environment,
-      # and the newest session named Quickbeam resumed (or one started).
-      claude = pkgs.writeShellScript "quickbeam-claude" ''
-        set -eu
-        export HOME=${state} CLAUDE_CONFIG_DIR=${config} TMPDIR=${state}/tmp
-        export PATH=${state}/.local/bin:/run/wrappers/bin:/run/current-system/sw/bin
-        export LANG=C.UTF-8 COLORTERM=truecolor
-        install -d -m 700 ${config} ${state}/tmp
-        # Its repo (identity and memory) is private, so it's cloned here by hand,
-        # with the commit identity in the clone's own git config (quickbeam-sync).
-        # Without it, Quickbeam starts in an empty directory.
-        install -d ${repo}
-        cd ${repo}
-        f=${config}/.claude.json; [ -s "$f" ] || echo '{}' > "$f"
-        jq '.projects["${repo}"].hasTrustDialogAccepted = true' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
-        id=
-        for t in $(grep -l '"customTitle":"Quickbeam"' ${config}/projects/${builtins.replaceStrings [ "/" ] [ "-" ] repo}/*.jsonl 2>/dev/null | xargs -r ls -t); do
-          if [ "$(grep -o '"customTitle":"[^"]*"' "$t" | tail -1)" = '"customTitle":"Quickbeam"' ]; then id=$(basename "$t" .jsonl); break; fi
-        done
-        if [ -n "$id" ]; then set -- --resume "$id"; else set -- -n Quickbeam; fi
-        exec claude --restricted --permission-mode dontAsk \
-          --tools Read,Edit,Write,Glob,Grep,WebSearch,WebFetch,Bash,CronCreate,CronList,CronDelete,TodoWrite \
-          --add-dir ${state}/work \
-          --append-system-prompt ${lib.escapeShellArg prompt} \
-          --settings ${settings} \
-          --strict-mcp-config --mcp-config ${mcp} \
-          --dangerously-load-development-channels server:imessage "$@"
-      '';
-    };
     # Claude sessions kept running in herdr, each in its own tab of workspace
     # "primary", with its own flags. Every 30 s: make sure the workspace and
     # tab exist and Claude runs in the tab; if it's been gone for two checks,
@@ -333,66 +251,7 @@
         herdr integration install claude >/dev/null
       '';
     };
-    # Quickbeam, the family agent: iMessage through the supervisor's
-    # BlueBubbles bridge, a sandboxed shell, and the commands Eldar lends it.
-    # Deliberately limited: restricted mode (only the settings given here
-    # load, file tools confined to its repo and work/), Bash only inside the
-    # sandbox (quickbeam.settings), only its own channel as MCP server, tools
-    # it isn't allowed are refused rather than asked about, and its own
-    # Claude config directory, so none of Eldar's settings, MCP servers or
-    # CLAUDE.md load. It lives outside /home/eldar so no CLAUDE.md above it
-    # loads either.
-    systemd.user.services.quickbeam-primary = keepClaude "quickbeam-primary" {
-      description = "Keep Quickbeam (the family agent) running";
-      tab = "Quickbeam";
-      cwd = quickbeam.repo;
-      configDir = quickbeam.config;
-      args = [ ];
-      launcher = "sudo -u quickbeam ${quickbeam.claude}";
-      marker = "quickbeam-claude";
-      env = { };
-      prepare = "true";
-    };
-    systemd.timers.quickbeam-sync = {
-      wantedBy = [ "timers.target" ];
-      timerConfig = { OnBootSec = "5min"; OnUnitActiveSec = "15min"; };
-    };
-    # Quickbeam's shell runs in Claude Code's sandbox (bubblewrap and socat, below).
-    # Eldar lends it commands through the tools relay: the grants file is
-    # Eldar's, the stubs land in its bin/, and the relay runs the real
-    # command as Eldar (supervisor/tools). Its toolbox is a Nix profile Eldar
-    # adds to; work/ is where it keeps data it processes.
-    systemd.user.services.quickbeam-tools = {
-      description = "Lend Eldar's commands to Quickbeam's sandbox";
-      wantedBy = [ "default.target" ];
-      unitConfig.ConditionUser = "eldar";
-      # The lent commands run with Eldar's environment (rootless Docker, nix).
-      path = [ herdr "/run/current-system/sw" "/etc/profiles/per-user/eldar" ];
-      environment.DOCKER_HOST = "unix://%t/docker.sock";
-      serviceConfig = {
-        ExecStart = "/run/current-system/sw/bin/supervisor tools-relay --grants /home/eldar/workspace/quickbeam/tools.yaml --stubs ${quickbeam.state}/bin --socket ${quickbeam.state}/run/tools.sock --herdr-tab primary/Quickbeam --herdr-hook /home/eldar/.claude/hooks/herdr-agent-state.sh";
-        Restart = "always";
-        RestartSec = 5;
-      };
-    };
-    # Quickbeam is its own user: the kernel keeps it from Eldar's files, not
-    # only the sandbox. Eldar starts it through this one sudo rule, and owns
-    # what it lends: the stubs, the relay's socket and the toolbox, in
-    # directories whose group (setgid) lets quickbeam read them.
-    users.users.quickbeam = { isSystemUser = true; uid = 1501; group = "quickbeam"; home = quickbeam.state; shell = pkgs.bash; };
-    users.groups.quickbeam.gid = 1501;
-    security.sudo.extraRules = [{ users = [ "eldar" ]; runAs = "quickbeam";
-      commands = [{ command = "${quickbeam.claude}"; options = [ "NOPASSWD" ]; }]; }];
-    # Run it on the tab's own terminal, not one of sudo's: herdr only sees an
-    # agent that's the pane's foreground process.
-    security.sudo.extraConfig = "Defaults!${quickbeam.claude} !use_pty";
-    systemd.tmpfiles.rules = [ "d ${quickbeam.state} 0711 quickbeam quickbeam -" ]
-      ++ map (d: "d ${quickbeam.state}/${d} 0700 quickbeam quickbeam -") [ "claude" "work" ]
-      ++ map (d: "Z ${quickbeam.state}/${d} - quickbeam quickbeam -") [ "repo" "claude" "work" ]
-      ++ [ "d ${quickbeam.state}/tmp 0700 quickbeam quickbeam 1d" ]
-      ++ map (d: "d ${quickbeam.state}/${d} 2750 eldar quickbeam -") [ "bin" "run" "toolbox" ];
-
-    # Ben works in here as eldar, so his dotfiles apply to both users.
+    # eldar's preferences (shell, herdr config) come from the pinned dotfiles.
     eldar-os.chezmoi.users = {
       eldar = {
         source = dotfiles;
@@ -400,7 +259,6 @@
         # an update (panes live under it): have it re-read the new one.
         afterApply = "${lib.getExe' herdr "herdr"} server reload-config";
       };
-      ben.source = dotfiles;
     };
     programs.zsh = {
       enable = true;
@@ -408,7 +266,7 @@
       promptInit = "";
     };
     users.users.eldar.shell = pkgs.zsh;
-    users.users.ben.shell = pkgs.zsh;
+    users.users.kevin.shell = pkgs.zsh;
     environment.localBinInPath = true; # ~/.local/bin (Claude Code, npm -g prefixes)
 
     # Prebuilt Linux binaries expect /lib64/ld-linux…: Claude Code's native
@@ -418,8 +276,6 @@
     environment.systemPackages = with pkgs; [
       # general
       git gh ripgrep fd jq bat htop tree vim helix gum direnv tmux fzf xxd file yq-go tokei
-      # Claude Code's Bash sandbox (Quickbeam's)
-      bubblewrap socat
       # on PATH for the plannotator-tui skill (`plannotator-tui herdr open`)
       plannotator-tui
       # runtimes
@@ -433,7 +289,6 @@
       supercronic
       # not in nixpkgs: ../../packages
       herdr
-      (callPackage ../../packages/atuin.nix { })
       (callPackage ../../packages/hb.nix { })
       (callPackage ../../packages/rwx.nix { })
       (callPackage ../../packages/composio.nix { })
@@ -443,22 +298,7 @@
     # Claude Code: the native build, installed once per user and then updating
     # itself, as on every other machine. A deliberate exception to pinning:
     # it ships near-daily and nixpkgs trails far behind.
-    systemd.services = let home = user: if user == "quickbeam" then quickbeam.state else "/home/${user}"; in {
-      # Quickbeam writes its memory into its repo: commit and push it.
-      quickbeam-sync = {
-        description = "Commit and push Quickbeam's memory";
-        path = [ pkgs.git pkgs.coreutils ];
-        serviceConfig = { Type = "oneshot"; User = "quickbeam"; };
-        script = ''
-          cd ${quickbeam.repo} 2>/dev/null || exit 0
-          git add -A
-          # As the identity in the repo's own config (user.name, user.email).
-          git diff --cached --quiet || git commit -q -m "Quickbeam's notes"
-          # Pushing needs GitHub access to the repo; until then the notes stay local.
-          git pull -q --rebase && git push -q || echo "not pushed (no access to the repo from here)"
-        '';
-      };
-    } // builtins.listToAttrs (map (user: {
+    systemd.services = let home = user: "/home/${user}"; in builtins.listToAttrs (map (user: {
       name = "claude-install-${user}";
       value = {
         description = "Install Claude Code for ${user}";
@@ -474,6 +314,6 @@
           ExecStart = "${pkgs.bash}/bin/bash -c 'curl -fsSL https://claude.ai/install.sh | bash'";
         };
       };
-    }) [ "eldar" "ben" "quickbeam" ]);
+    }) [ "eldar" "kevin" ]);
   };
 }

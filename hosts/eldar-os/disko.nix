@@ -1,4 +1,4 @@
-# Disk layout for the Samsung 970 EVO 500GB (serial S5H7NC0MB49704F).
+# Disk layout for the eldar-os disk: on dbmart, the Samsung PM953 960GB (serial S2L9NX0J307636).
 #
 # GPT: 1G ESP + LUKS2 → XFS.
 #

@@ -14,8 +14,8 @@ cd "$(dirname "$0")/.."
 # Both paths must match the sudo rules in hosts/eldar-os/configuration.nix.
 # The tree is copied there (not built in place) so the rule can name a fixed
 # path, and so only tracked and unignored files reach the build.
-DIR=/home/ben/.cache/eldar-os-try
-DOTDIR=/home/ben/.cache/eldar-os-try-dotfiles
+DIR=/home/kevin/.cache/eldar-os-try
+DOTDIR=/home/kevin/.cache/eldar-os-try-dotfiles
 
 copy() { # <checkout> <dest>
   rm -rf "$2" && mkdir -p "$2"

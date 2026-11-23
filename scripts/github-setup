@@ -19,8 +19,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Machine-specific: a fork points these at its own repos and tailnet.
-STAGING=benjaminwood/eldar-os-staging
-SECRETS=benjaminwood/eldar-os-secrets
+STAGING=1kevgriff/eldar-os
+SECRETS=1kevgriff/eldar-os-secrets
 # The tailnet's domain (<name>.ts.net) comes from this host's Tailscale, so it
 # never needs to be written down here.
 TAILNET=${TAILNET:-$(tailscale status --json 2>/dev/null | jq -r '.MagicDNSSuffix // empty')}

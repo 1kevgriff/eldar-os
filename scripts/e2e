@@ -43,12 +43,12 @@ git ls-files -co --exclude-standard | tar -cf - -T - | VM_USER=nixos $VM ssh 'rm
 VM_USER=nixos $VM ssh 'sudo bash eldar-os/scripts/install.sh'
 
 # The config authorizes one specific key (hosts/eldar-os/configuration.nix).
-# This run's key may differ (CI, a fork), so let it in through ben's own
+# This run's key may differ (CI, a fork), so let it in through kevin's own
 # ~/.ssh/authorized_keys on the new disk: test state, not configuration.
 step "authorize this run's key on the installed system"
-VM_USER=nixos $VM ssh "sudo install -d -m 700 -o 1000 -g 100 /mnt/home/ben/.ssh \
-  && echo '$(cat ~/.ssh/eldar-os-vm.pub)' | sudo tee -a /mnt/home/ben/.ssh/authorized_keys >/dev/null \
-  && sudo chown 1000:100 /mnt/home/ben/.ssh/authorized_keys && sudo chmod 600 /mnt/home/ben/.ssh/authorized_keys \
+VM_USER=nixos $VM ssh "sudo install -d -m 700 -o 1000 -g 100 /mnt/home/kevin/.ssh \
+  && echo '$(cat ~/.ssh/eldar-os-vm.pub)' | sudo tee -a /mnt/home/kevin/.ssh/authorized_keys >/dev/null \
+  && sudo chown 1000:100 /mnt/home/kevin/.ssh/authorized_keys && sudo chmod 600 /mnt/home/kevin/.ssh/authorized_keys \
   && sync"
 
 # The real machine decrypts secrets (fetched from a private repo) with its own
@@ -61,8 +61,21 @@ VM_USER=nixos $VM ssh 'set -e; cd eldar-os; export NIX_CONFIG="experimental-feat
   sudo install -d -m 755 /mnt/etc/ssh /mnt/var/lib/eldar-os/secrets
   sudo ssh-keygen -q -t ed25519 -N "" -C eldar-os-e2e -f /mnt/etc/ssh/ssh_host_ed25519_key
   recipient=$(nix run --inputs-from . nixpkgs#ssh-to-age < /mnt/etc/ssh/ssh_host_ed25519_key.pub)
+  # The data disk (the dry run'"'"'s sparse image), formatted as docs/install.md
+  # does the real one, with a throwaway key that never leaves the installer.
+  data=/dev/disk/by-id/virtio-eldar-data
+  dk=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d " \n")
+  printf "%s" "$dk" > /tmp/dk
+  printf "label: gpt\ntype=CA7D7CCB-63ED-4C53-861C-1742536059CC, name=eldar-data\n" | sudo sfdisk -q "$data"
+  sudo udevadm settle
+  sudo cryptsetup luksFormat --batch-mode --type luks2 --label eldar-data --key-file /tmp/dk "$data-part1"
+  sudo cryptsetup open --key-file /tmp/dk "$data-part1" e2e-data
+  sudo mkfs.xfs -q -K -L eldar-data /dev/mapper/e2e-data
+  sudo cryptsetup close e2e-data
+  rm /tmp/dk
   printf "%s\n" "canary: secrets-pipeline-ok" "supervisor-env: \"\"" "supervisor-web-env: \"\"" \
-    "github-app-key: \"\"" "apply-webhook-secret: \"\"" "remote-hosts:" "  mac: \"\"" > /tmp/test-secrets.yaml
+    "github-app-key: \"\"" "apply-webhook-secret: \"\"" "data-disk-key: \"$dk\"" \
+    > /tmp/test-secrets.yaml
   nix run --inputs-from . nixpkgs#sops -- encrypt --age "$recipient" /tmp/test-secrets.yaml \
     | sudo tee /mnt/var/lib/eldar-os/secrets/eldar-os.yaml >/dev/null
   sync'

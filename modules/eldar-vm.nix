@@ -5,7 +5,7 @@
 # loop); the VM is where Ben and the AI work. The VM gets its own kernel and
 # network, reaches the host only on the supervisor's port, and shares one
 # directory with it (the workspace, over virtiofs). Inside: `eldar` is the
-# unprivileged user everyone works as; `ben` is the privileged one (sudo, and
+# unprivileged user everyone works as; `kevin` is the privileged one (sudo, and
 # the user the supervisor runs credentialed commands as).
 { config, lib, pkgs, ... }:
 let
@@ -131,7 +131,7 @@ in
   # files Eldar writes (uid 1500 inside the VM) have a name on the host. Ben
   # gets in through the eldar-ws group.
   users.users.eldar = { uid = eldarUid; isSystemUser = true; group = "eldar-ws"; };
-  users.groups.eldar-ws = { gid = workspaceGid; members = [ "ben" ]; };
+  users.groups.eldar-ws = { gid = workspaceGid; members = [ "kevin" ]; };
   systemd.tmpfiles.rules = [ "d ${workspace} 2770 eldar eldar-ws -" ];
 
   # The VM's SSH host key lives on the host: a microVM's root is rebuilt on
@@ -266,6 +266,12 @@ in
   # than fail.
   systemd.services."microvm@eldar".unitConfig.ConditionPathExists = "/dev/kvm";
   systemd.services."microvm@eldar".unitConfig.RequiresMountsFor = [ cfg.imageDir ];
+  # The runner creates missing images but not their directory. Make it once
+  # the mount is up (tmpfiles runs too early for a nofail mount like /data),
+  # as root ("+"), owned like microvm's own /var/lib/microvms/<name>.
+  systemd.services."microvm@eldar".serviceConfig.ExecStartPre = [
+    "+${pkgs.coreutils}/bin/install -d -m 775 -o microvm -g kvm ${cfg.imageDir}"
+  ];
 
   # --- the VM -----------------------------------------------------------------
 
@@ -330,16 +336,16 @@ in
       isNormalUser = true;
       uid = eldarUid;
       group = "eldar-ws";
-      # ben (in eldar-ws) works in eldar's ~/workspace, and the supervisor runs
-      # agents' commands as ben, so the home must stay group-traversable. NixOS
+      # kevin (in eldar-ws) works in eldar's ~/workspace, and the supervisor runs
+      # agents' commands as kevin, so the home must stay group-traversable. NixOS
       # chmods a home to homeMode (default 700) on every switch, which undid the
       # tmpfiles rule below after each in-place update (decision 0010).
       homeMode = "750";
       linger = true; # its user services (rootless Docker, agents) run without a login
-      openssh.authorizedKeys.keys = config.users.users.ben.openssh.authorizedKeys.keys;
+      openssh.authorizedKeys.keys = config.users.users.kevin.openssh.authorizedKeys.keys;
       # Fixed subordinate ids: rootless Docker stores every image and volume
       # file under them. The VM's root (and /etc/subuid) is rebuilt each boot,
-      # and automatic allocation can hand eldar's range to ben on the next one,
+      # and automatic allocation can hand eldar's range to kevin on the next one,
       # leaving all of Docker's data owned by someone else.
       autoSubUidGidRange = false;
       subUidRanges = [{ startUid = 165536; count = 65536; }];
@@ -347,11 +353,11 @@ in
     };
     # Privileged: Ben's admin identity inside the VM. sudo needs a password
     # (not set yet), so nothing gets root without Ben.
-    users.users.ben = {
+    users.users.kevin = {
       isNormalUser = true;
       uid = 1000;
       extraGroups = [ "wheel" "eldar-ws" ];
-      openssh.authorizedKeys.keys = config.users.users.ben.openssh.authorizedKeys.keys;
+      openssh.authorizedKeys.keys = config.users.users.kevin.openssh.authorizedKeys.keys;
       autoSubUidGidRange = false; # fixed too, clear of eldar's (above)
       subUidRanges = [{ startUid = 100000; count = 65536; }];
       subGidRanges = [{ startGid = 100000; count = 65536; }];
@@ -381,7 +387,7 @@ in
     # put the homes right on every boot.
     systemd.tmpfiles.rules = [
       "d /home/eldar 0750 eldar eldar-ws -"
-      "d /home/ben 0700 ben users -"
+      "d /home/kevin 0700 kevin users -"
     ];
     # The supervisor, as agents in here reach it (PROXY_URL for clients not
     # yet moved over from the old setup).
@@ -389,7 +395,7 @@ in
       SUPERVISOR_URL = "http://${hostAddr}:${toString supervisorPort}";
       PROXY_URL = "http://${hostAddr}:${toString supervisorPort}";
     };
-    # Shared workspace: new files group-writable, so ben can edit them.
+    # Shared workspace: new files group-writable, so kevin can edit them.
     environment.extraInit = "umask 002";
     # Docker runs as eldar (a container that mounts / gets eldar's files, not root).
     virtualisation.docker.rootless = {
@@ -465,7 +471,7 @@ in
             || { new=$(jq '.enableAllProjectMcpServers = true' "$s"); printf '%s\n' "$new" > "$s"; }
         '';
       };
-    }) [ "eldar" "ben" ]) // lib.optionalAttrs (cfg.claudeLinks != { }) {
+    }) [ "eldar" "kevin" ]) // lib.optionalAttrs (cfg.claudeLinks != { }) {
       # ~/.claude pieces that live in the workspace repo (claudeLinks).
       claude-links = {
         description = "Link eldar's ~/.claude to the workspace repo";
