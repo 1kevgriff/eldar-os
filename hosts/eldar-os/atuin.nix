@@ -45,9 +45,11 @@ in
   };
 
   # The env file holds the database credentials and only exists after the
-  # one-time migration (docs/install.md, step 12). Until then, skip the server
-  # instead of failing, so a fresh install comes up clean.
+  # one-time migration (docs/install.md, step 12), which also brings the
+  # database (an empty data directory with no password can't initialize).
+  # Until then, skip both instead of failing, so a fresh install comes up clean.
   systemd.services.docker-atuin.unitConfig.ConditionPathExists = "/var/lib/atuin/env";
+  systemd.services.docker-atuin-postgres.unitConfig.ConditionPathExists = "/var/lib/atuin/env";
 
   systemd.tmpfiles.rules = [
     "d /var/lib/atuin 0700 root root -"
