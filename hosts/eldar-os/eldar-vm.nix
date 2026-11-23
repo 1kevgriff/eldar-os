@@ -283,6 +283,8 @@
       (python3.withPackages (ps: with ps; [ numpy scipy pillow rectpack ]))
       # cloud and dev CLIs
       awscli2 kubectl heroku wrangler duckdb codex
+      # databases (SOS: Azure SQL, Atlas)
+      sqlcmd mongosh
       # 3D-printing pipeline
       potrace openscad imagemagick
       # cron (jobs.json) until jobs move to systemd timers
