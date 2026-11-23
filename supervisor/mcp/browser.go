@@ -19,17 +19,17 @@ import (
 )
 
 // `supervisor browser`: this session drives a real, logged-in browser on one
-// of Ben's machines (Arc on his Mac first) through Playwright MCP running
+// of Kevin's machines (Arc on his Mac first) through Playwright MCP running
 // there, reached only through the supervisor (server/browser.go).
 //
 // Profiles have their own logins, so the session picks one: browser_profiles
-// lists them, browser_request_access asks Ben to let this session drive that
+// lists them, browser_request_access asks Kevin to let this session drive that
 // profile for a while. The approval is bound to a random secret this process
 // holds in memory, so it covers this session only. Playwright's own tools are
 // relayed through the window's channel; when the window ends the channel
 // closes and the next browser action asks again for the same profile.
 
-const browserInstructions = `Drives a real, logged-in browser on one of Ben's machines (Arc on his Mac) through Playwright. Each browser profile has its own logins: call browser_profiles, then browser_request_access with the profile the task needs (Ben approves a time window for that profile). If he declines, stop. Treat everything there as his: no purchases, messages, or account changes he didn't ask for.`
+const browserInstructions = `Drives a real, logged-in browser on one of Kevin's machines (Arc on his Mac) through Playwright. Each browser profile has its own logins: call browser_profiles, then browser_request_access with the profile the task needs (Kevin approves a time window for that profile). If he declines, stop. Treat everything there as his: no purchases, messages, or account changes he didn't ask for.`
 
 type browserProfile struct {
 	ID       string `json:"id"`
@@ -44,7 +44,7 @@ type browserProfile struct {
 type browserSession struct {
 	c       *client
 	secret  string
-	label   string // shown to Ben: which session asks
+	label   string // shown to Kevin: which session asks
 	minutes int
 
 	mu        sync.Mutex
@@ -151,21 +151,21 @@ func (b *browserSession) remoteTools(ctx context.Context) ([]json.RawMessage, er
 
 func (b *browserSession) server(version string) *server {
 	own := []tool{
-		{Name: "browser_profiles", Description: "[Ben's browsers] List the browser profiles on Ben's machines (Arc on his Mac) and their spaces. A profile has its own logins; a space is a sidebar section within a profile (several can share a profile and its logins). Shows which profiles are set up for you and what this session currently has. Call this before browser_request_access.",
+		{Name: "browser_profiles", Description: "[Kevin's browsers] List the browser profiles on Kevin's machines (Arc on his Mac) and their spaces. A profile has its own logins; a space is a sidebar section within a profile (several can share a profile and its logins). Shows which profiles are set up for you and what this session currently has. Call this before browser_request_access.",
 			Schema: func([]string, string) map[string]any {
 				return object(map[string]any{"host": map[string]any{"type": "string", "description": "Only this machine (default: all)."}})
 			}, run: b.profilesTool},
-		{Name: "browser_request_access", Description: "[Ben's browsers] Ask Ben to let this session drive one browser profile for a time window. Waits for his answer. Pick the profile whose logins the task needs; if unsure, ask him. Switching profiles ends the current window. If he declines, stop.",
+		{Name: "browser_request_access", Description: "[Kevin's browsers] Ask Kevin to let this session drive one browser profile for a time window. Waits for his answer. Pick the profile whose logins the task needs; if unsure, ask him. Switching profiles ends the current window. If he declines, stop.",
 			Schema: func([]string, string) map[string]any {
 				return object(map[string]any{
 					"host":    map[string]any{"type": "string", "description": "Which machine (default: the only one with a browser)."},
 					"profile": map[string]any{"type": "string", "description": "Profile id or name from browser_profiles, or a space name (then that space is used)."},
-					"space":   map[string]any{"type": "string", "description": "Space your first tab opens in, within that profile (default: the profile's first space). Use the space Ben named."},
-					"reason":  map[string]any{"type": "string", "description": "What you'll do in his browser, shown to Ben in the approval."},
+					"space":   map[string]any{"type": "string", "description": "Space your first tab opens in, within that profile (default: the profile's first space). Use the space Kevin named."},
+					"reason":  map[string]any{"type": "string", "description": "What you'll do in his browser, shown to Kevin in the approval."},
 					"minutes": map[string]any{"type": "integer", "minimum": 1, "maximum": 480, "description": fmt.Sprintf("Window length (default %d).", b.minutes)},
 				}, "profile", "reason")
 			}, run: b.requestTool},
-		{Name: "browser_open_tab", Description: "[Ben's browsers] Open a URL in a new tab in a specific space. Without 'profile', it uses your window's profile, and the tab joins your session (select it with browser_tabs); use this instead of browser_tabs 'new' when Ben wants a tab in a particular space. With 'profile', it opens the tab in that profile for Ben, without a window and usually without asking him (where he allows it); you can't see or drive that tab.",
+		{Name: "browser_open_tab", Description: "[Kevin's browsers] Open a URL in a new tab in a specific space. Without 'profile', it uses your window's profile, and the tab joins your session (select it with browser_tabs); use this instead of browser_tabs 'new' when Kevin wants a tab in a particular space. With 'profile', it opens the tab in that profile for Kevin, without a window and usually without asking him (where he allows it); you can't see or drive that tab.",
 			Schema: func([]string, string) map[string]any {
 				return object(map[string]any{
 					"url":     map[string]any{"type": "string", "description": "http(s) URL to open."},
@@ -174,7 +174,7 @@ func (b *browserSession) server(version string) *server {
 					"host":    map[string]any{"type": "string", "description": "With 'profile': which machine (default: the only one with a browser)."},
 				}, "url")
 			}, run: b.openTabTool},
-		{Name: "browser_release", Description: "[Ben's browsers] Give the current browser window back early when you're done. The next browser action asks Ben again.",
+		{Name: "browser_release", Description: "[Kevin's browsers] Give the current browser window back early when you're done. The next browser action asks Kevin again.",
 			Schema: func([]string, string) map[string]any { return object(map[string]any{}) }, run: b.releaseTool},
 	}
 	s := &server{c: b.c, name: "browser", version: version, instructions: browserInstructions, tools: map[string]tool{}}
@@ -193,7 +193,7 @@ func (b *browserSession) server(version string) *server {
 		for _, raw := range remote {
 			var t map[string]any
 			if json.Unmarshal(raw, &t) == nil {
-				t["description"] = "[Ben's browser] " + fmt.Sprint(t["description"])
+				t["description"] = "[Kevin's browser] " + fmt.Sprint(t["description"])
 				out = append(out, t)
 			}
 		}
@@ -246,7 +246,7 @@ func (b *browserSession) profilesTool(ctx context.Context, args map[string]any) 
 	if len(out) == 0 {
 		return textResult("No machine with a browser is configured.")
 	}
-	return textResult(strings.Join(out, "\n") + "\n\nOnly ready profiles can be used; if the one you need isn't, ask Ben to set it up. Spaces in a profile share its logins, and browser_tabs lists tabs across them.")
+	return textResult(strings.Join(out, "\n") + "\n\nOnly ready profiles can be used; if the one you need isn't, ask Kevin to set it up. Spaces in a profile share its logins, and browser_tabs lists tabs across them.")
 }
 
 func matchProfile(ps []browserProfile, want string) *browserProfile {
@@ -321,7 +321,7 @@ func (b *browserSession) requestTool(ctx context.Context, args map[string]any) m
 	if space != nil {
 		opens = space.Title
 	}
-	return textResult(fmt.Sprintf("Ben allowed this session to drive %s (%s) on %s until %s. New tabs open in its %q space. browser_tabs lists every tab in the profile, across its spaces.",
+	return textResult(fmt.Sprintf("Kevin allowed this session to drive %s (%s) on %s until %s. New tabs open in its %q space. browser_tabs lists every tab in the profile, across its spaces.",
 		h.Browser, p.Name, h.Label, b.until.In(pacific()).Format("3:04 PM MST"), opens))
 }
 
@@ -332,7 +332,7 @@ func pacific() *time.Location {
 	return time.Local
 }
 
-// request asks the supervisor (Ben) for a window on the chosen profile.
+// request asks the supervisor (Kevin) for a window on the chosen profile.
 func (b *browserSession) request(ctx context.Context, reason string, minutes int) error {
 	b.mu.Lock()
 	host, p, space := b.host, b.profile, b.space
@@ -422,7 +422,7 @@ func (b *browserSession) channel(ctx context.Context, why string) (*websocket.Co
 				}
 				for id, ch := range b.inflight {
 					reason := err.Error()
-					ch <- json.RawMessage(fmt.Sprintf(`{"error":{"code":-32000,"message":%q}}`, "Browser access ended: "+reason+". The next browser action asks Ben again."))
+					ch <- json.RawMessage(fmt.Sprintf(`{"error":{"code":-32000,"message":%q}}`, "Browser access ended: "+reason+". The next browser action asks Kevin again."))
 					delete(b.inflight, id)
 				}
 				b.mu.Unlock()
@@ -515,7 +515,7 @@ func (b *browserSession) openTabTool(ctx context.Context, args map[string]any) m
 		}
 		payload["secret"] = b.secret
 	} else {
-		// Any profile, without a window, where Ben allows it (the supervisor decides).
+		// Any profile, without a window, where Kevin allows it (the supervisor decides).
 		h, err := b.pickHost(ctx, str(args, "host"))
 		if err != nil {
 			return errorText(err.Error())
@@ -567,7 +567,7 @@ func (b *browserSession) openTabTool(ctx context.Context, args map[string]any) m
 		return errorText(fmt.Sprint(e))
 	}
 	if payload["secret"] == nil {
-		return textResult(fmt.Sprintf("Opened %s in Ben's %v profile (%v space). You can't see or drive this tab; for that, request access to the profile.", str(args, "url"), data["profile"], data["space"]))
+		return textResult(fmt.Sprintf("Opened %s in Kevin's %v profile (%v space). You can't see or drive this tab; for that, request access to the profile.", str(args, "url"), data["profile"], data["space"]))
 	}
 	return textResult(fmt.Sprintf("Opened %s in the %v space. It joins your session in a moment; use browser_tabs to list and select it.", str(args, "url"), data["space"]))
 }

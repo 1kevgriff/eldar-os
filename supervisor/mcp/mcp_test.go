@@ -19,7 +19,7 @@ func fakeSupervisor(t *testing.T, exec func(body map[string]any) map[string]any)
 		case "/status":
 			out = map[string]any{"op": map[string]any{"defaultProfile": "work",
 				"profiles": []any{map[string]any{"name": "work"}, map[string]any{"name": "home"}}},
-				"hosts": []any{map[string]any{"name": "mac", "label": "Ben's Mac", "description": "macOS laptop"}}}
+				"hosts": []any{map[string]any{"name": "mac", "label": "Kevin's Mac", "description": "macOS laptop"}}}
 		case "/exec", "/copy":
 			var body map[string]any
 			json.NewDecoder(r.Body).Decode(&body)
@@ -77,7 +77,7 @@ func TestToolsListNamesProfilesFromSupervisor(t *testing.T) {
 		if m := x.(map[string]any); m["name"] == "supervisor_exec" {
 			exec = m
 		}
-		if name := x.(map[string]any)["name"].(string); !strings.HasPrefix(name, "supervisor_") && name != "notify_ben" {
+		if name := x.(map[string]any)["name"].(string); !strings.HasPrefix(name, "supervisor_") && name != "notify_kevin" {
 			t.Errorf("tool %q isn't named supervisor_*", name)
 		}
 	}
@@ -110,7 +110,7 @@ func TestExecSendsScriptVerbatimWithSession(t *testing.T) {
 
 func TestExecFailureCarriesOutcomeGuidance(t *testing.T) {
 	srv := fakeSupervisor(t, func(map[string]any) map[string]any {
-		return map[string]any{"error": "Ben said no", "outcome": "denied"}
+		return map[string]any{"error": "Kevin said no", "outcome": "denied"}
 	})
 	got := call(t, srv, `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"supervisor_exec","arguments":{"command":"x","reason":"y"}}}`)
 	text, isErr := resultText(t, got[1])
@@ -136,7 +136,7 @@ func TestHostExecListsConfiguredHosts(t *testing.T) {
 		if m["name"] != "supervisor_host_exec" {
 			continue
 		}
-		if !strings.Contains(m["description"].(string), "- mac: Ben's Mac. macOS laptop") {
+		if !strings.Contains(m["description"].(string), "- mac: Kevin's Mac. macOS laptop") {
 			t.Fatalf("description: %s", m["description"])
 		}
 		host := m["inputSchema"].(map[string]any)["properties"].(map[string]any)["host"].(map[string]any)
@@ -154,7 +154,7 @@ func TestCopyPostsBothEndsAndReportsTheVerifiedFile(t *testing.T) {
 		sent = b
 		return map[string]any{"from": b["from"], "to": "mac:/Users/ben/Downloads/r.csv", "bytes": 47123, "sha256": "ab12"}
 	})
-	got := call(t, srv, `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"supervisor_copy","arguments":{"from":"eldar:/tmp/r.csv","to":"mac:~/Downloads/","reason":"for Ben"}}}`)
+	got := call(t, srv, `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"supervisor_copy","arguments":{"from":"eldar:/tmp/r.csv","to":"mac:~/Downloads/","reason":"for Kevin"}}}`)
 	text, isErr := resultText(t, got[1])
 	if isErr || text != "Copied eldar:/tmp/r.csv → mac:/Users/ben/Downloads/r.csv: 47123 bytes, sha256 ab12, verified at the destination." {
 		t.Fatalf("result %q", text)

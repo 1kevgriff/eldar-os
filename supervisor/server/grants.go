@@ -9,14 +9,14 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/api"
 )
 
-// Grants are bypasses Ben creates (or approves a session's request for). A
+// Grants are bypasses Kevin creates (or approves a session's request for). A
 // grant auto-approves the requests it covers; each target has its own scope and
 // never covers another:
 //
 //	eldar    commands in the agent's environment: session × profile ×
 //	         credentials ("*", or a set the request's names must be a subset
 //	         of; [] = only none) × aws (AWS profiles covered; none unless said)
-//	mac      commands on Ben's Mac: session × profile × credentials
+//	mac      commands on Kevin's Mac: session × profile × credentials
 //	browser  Arc on the Mac: session × arc (Arc profile directories)
 //
 // Grants never override a policy deny or lockdown (checked first). In memory
@@ -28,7 +28,7 @@ type Grants struct {
 	n       *Notifier
 }
 
-// Grants are Ben's standing exceptions to per-command approval, narrow by
+// Grants are Kevin's standing exceptions to per-command approval, narrow by
 // construction and in memory only (docs/decisions/0013-approvals-and-grants.md).
 func NewGrants(n *Notifier) *Grants { return &Grants{grants: map[int]*api.Grant{}, n: n} }
 

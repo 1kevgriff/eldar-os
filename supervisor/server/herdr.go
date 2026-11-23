@@ -15,7 +15,7 @@ import (
 )
 
 // Herdr reads and drives herdr in Eldar's VM (as the agent user, who runs the
-// herdr server) for the admin UIs: Ben's workspaces, starting Claude sessions
+// herdr server) for the admin UIs: Kevin's workspaces, starting Claude sessions
 // and shells, closing them. Only reachable through the admin socket. Commands
 // name explicit IDs and pass --no-focus, so they never move whatever a desk
 // client is looking at.

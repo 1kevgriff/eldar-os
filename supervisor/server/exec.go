@@ -107,7 +107,7 @@ func (s *Supervisor) profilesHint() string {
 }
 
 // HandleExec runs POST /exec: validate, decide (cron, lockdown, policy,
-// bypass, grants, Ben), then execute.
+// bypass, grants, Kevin), then execute.
 func (s *Supervisor) HandleExec(ctx context.Context, req ExecRequest) response {
 	id := s.nextID()
 	mode := s.modes.Current()
@@ -221,15 +221,15 @@ func (s *Supervisor) HandleExec(ctx context.Context, req ExecRequest) response {
 
 	switch result {
 	case "approved":
-		return run("Approved by Ben")
+		return run("Approved by Kevin")
 	case "allow_always":
-		return run("Approved by Ben + added to allowlist")
+		return run("Approved by Kevin + added to allowlist")
 	}
 	e := base
 	e.Decision = "timeout"
 	switch result {
 	case "denied":
-		e.Decision, e.DecisionReason = "denied", "Denied by Ben"
+		e.Decision, e.DecisionReason = "denied", "Denied by Kevin"
 	case "undeliverable":
 		e.DecisionReason = "Approval prompt could not be delivered to any channel"
 	default:
@@ -240,9 +240,9 @@ func (s *Supervisor) HandleExec(ctx context.Context, req ExecRequest) response {
 	case "undeliverable":
 		return fail(403, id, OutUndeliverable, "Approval could not be delivered on any channel — nobody saw this request and nothing was executed. This is NOT a refusal; it is safe to retry once.")
 	case "denied":
-		return fail(403, id, OutDenied, "Request denied by Ben. Do NOT retry or attempt to work around this.")
+		return fail(403, id, OutDenied, "Request denied by Kevin. Do NOT retry or attempt to work around this.")
 	default:
-		return fail(403, id, OutTimedOut, "Request timed out — Ben did not approve within the timeout window. Do NOT retry. Inform Ben that the request was not approved and you will not continue with this action.")
+		return fail(403, id, OutTimedOut, "Request timed out — Kevin did not approve within the timeout window. Do NOT retry. Inform Kevin that the request was not approved and you will not continue with this action.")
 	}
 }
 
@@ -275,7 +275,7 @@ func (s *Supervisor) execute(ctx context.Context, id int, full, shell string, re
 		if key != "" {
 			out, forKey = OutCredentialMissing, " for "+key
 		}
-		return fail(502, id, out, "Credential fetch from 1Password failed"+forKey+". The command was NOT executed. Inform Ben.", "detail", err.Error())
+		return fail(502, id, out, "Credential fetch from 1Password failed"+forKey+". The command was NOT executed. Inform Kevin.", "detail", err.Error())
 	}
 
 	if req.AwsProfile != "" {
@@ -285,7 +285,7 @@ func (s *Supervisor) execute(ctx context.Context, id int, full, shell string, re
 			e.Decision, e.DecisionReason = "deny", err.Error()
 			s.audit.Log(e)
 			return fail(502, id, OutMintFailed, fmt.Sprintf("AWS credentials for '%s' couldn't be minted, so nothing ran: %v. "+
-				"This isn't a refusal: Ben needs to sign the supervisor in to AWS again (`supervisor aws-login` on eldar-os; one sign-in covers every role).", req.AwsProfile, err))
+				"This isn't a refusal: Kevin needs to sign the supervisor in to AWS again (`supervisor aws-login` on eldar-os; one sign-in covers every role).", req.AwsProfile, err))
 		}
 		if creds == nil {
 			creds = map[string]string{}
@@ -354,7 +354,7 @@ func (s *Supervisor) verifyCron(ctx context.Context, id string) (bool, string) {
 	return true, ""
 }
 
-// awaitHuman registers the prompt with the admin API and waits for Ben.
+// awaitHuman registers the prompt with the admin API and waits for Kevin.
 // Returns approved | denied | allow_always | timeout | undeliverable.
 func (s *Supervisor) awaitHuman(id int, info api.Pending, allowAlways func()) string {
 	now := time.Now()

@@ -92,7 +92,7 @@ func (s *Sessions) Touch(id, key string, meta TouchMeta) bool {
 }
 
 // Unpin forgets a session's pinned key so its next request re-pins: for when
-// its client restarted (new key, same ID) and Ben has confirmed that's what the
+// its client restarted (new key, same ID) and Kevin has confirmed that's what the
 // mismatches were.
 func (s *Sessions) Unpin(id string) bool {
 	s.mu.Lock()

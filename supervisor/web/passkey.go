@@ -18,8 +18,8 @@ import (
 )
 
 // Passkeys gate the whole web app behind Face ID / Touch ID (WebAuthn with
-// user verification required). Tailnet identity says "this is Ben's phone";
-// a passkey assertion says "and Ben is holding it". Nothing under /api but the
+// user verification required). Tailnet identity says "this is Kevin's phone";
+// a passkey assertion says "and Kevin is holding it". Nothing under /api but the
 // passkey ceremony itself answers without it.
 //
 //   - The first passkey can be registered by any device the tailnet admits.
@@ -72,12 +72,12 @@ type passkeys struct {
 	unlocks map[string]unlock
 }
 
-// benUser is the single WebAuthn account: Ben.
+// benUser is the single WebAuthn account: Kevin.
 type benUser struct{ p *passkeys }
 
 func (u benUser) WebAuthnID() []byte          { return u.p.data.UserID }
 func (u benUser) WebAuthnName() string        { return "ben" }
-func (u benUser) WebAuthnDisplayName() string { return "Ben" }
+func (u benUser) WebAuthnDisplayName() string { return "Kevin" }
 func (u benUser) WebAuthnCredentials() []webauthn.Credential {
 	out := make([]webauthn.Credential, len(u.p.data.Keys))
 	for i, k := range u.p.data.Keys {

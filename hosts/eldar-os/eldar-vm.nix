@@ -28,7 +28,7 @@
     herdr-annotate = pkgs.callPackage ../../packages/herdr-annotate.nix { };
     # The release binary herdr-annotate ships, under its own name for the PATH.
     plannotator-tui = pkgs.runCommand "plannotator-tui" { } "mkdir -p $out/bin; ln -s ${herdr-annotate}/bin/plannotator-tui.exe $out/bin/plannotator-tui";
-    # Eldar's two channels (supervisor/mcp): Ben's chat, and notify_ben events
+    # Eldar's two channels (supervisor/mcp): Kevin's chat, and notify_kevin events
     # from other agents, scripts and cron. Only Eldar's session loads them.
     channels = pkgs.writeText "eldar-channels.mcp.json" (builtins.toJSON {
       mcpServers = lib.genAttrs [ "chat" "relay" ] (name: {
@@ -152,7 +152,7 @@
   in {
     imports = [ ../../modules/chezmoi.nix ../../modules/vm-chrome.nix ];
 
-    # Chrome agents drive freely (Playwright over CDP); Ben watches its stream.
+    # Chrome agents drive freely (Playwright over CDP); Kevin watches its stream.
     eldar-os.vmChrome = {
       enable = true;
       # *.test: the dev router below, reached at the VM's own address.
@@ -178,7 +178,7 @@
 
     # herdr, Eldar's terminal workspace manager: the server runs as eldar
     # (lingering, so with no one logged in), and there's always a "primary"
-    # workspace to start sessions in. The supervisor drives it for Ben's UIs.
+    # workspace to start sessions in. The supervisor drives it for Kevin's UIs.
     systemd.user.services.herdr = {
       description = "herdr server";
       wantedBy = [ "default.target" ];
@@ -223,8 +223,8 @@
       };
     };
 
-    # Eldar, the chief-of-staff session, with its channels: chat (Ben talks
-    # to it from the supervisor's web UI) and relay (other agents reach Ben
+    # Eldar, the chief-of-staff session, with its channels: chat (Kevin talks
+    # to it from the supervisor's web UI) and relay (other agents reach Kevin
     # through it).
     systemd.user.services.eldar-primary = keepClaude "eldar-primary" {
       description = "Keep Eldar (the chief-of-staff session) running";

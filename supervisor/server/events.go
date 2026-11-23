@@ -1,5 +1,5 @@
 // Package server is the supervisor: it holds the credentials, decides what an
-// agent may run (policy, grants, Ben's approvals), runs it in the agent's
+// agent may run (policy, grants, Kevin's approvals), runs it in the agent's
 // environment, and serves the admin API the TUI and web UI use.
 package server
 

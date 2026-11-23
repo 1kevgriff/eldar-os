@@ -21,7 +21,7 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/server"
 )
 
-// runHostAgent is `supervisor host-agent`: Ben's user service on the
+// runHostAgent is `supervisor host-agent`: Kevin's user service on the
 // supervisor's machine, doing the fixed jobs that need his login there
 // (server/hostagent.go). It takes jobs over the admin socket, so only a member
 // of supervisor-admin can run it, and runs no command it's sent: each kind of
@@ -177,7 +177,7 @@ func openSupervisorTUI(ctx context.Context) error {
 	return err
 }
 
-// herdrJSON runs Ben's herdr and returns its JSON result.
+// herdrJSON runs Kevin's herdr and returns its JSON result.
 func herdrJSON(ctx context.Context, args ...string) (json.RawMessage, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

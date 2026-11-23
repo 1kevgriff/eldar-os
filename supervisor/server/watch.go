@@ -244,7 +244,7 @@ func (s *Supervisor) tellSession(ctx context.Context, x Watch, text string) {
 		}
 	}
 	if pane == "" {
-		s.relay.Add(text+" (The session that opened it is gone; tell Ben.)", map[string]string{"origin": "supervisor: PR watch", "session_id": x.SessionID})
+		s.relay.Add(text+" (The session that opened it is gone; tell Kevin.)", map[string]string{"origin": "supervisor: PR watch", "session_id": x.SessionID})
 	}
 	s.audit.Log(AuditEntry{RequestID: s.nextID(), Action: fmt.Sprintf("PR watch %s#%d: %s", x.Repo, x.PR, truncRunes(text, 160)),
 		Decision: "allow", DecisionReason: how, SessionID: x.SessionID, Mode: "normal"})

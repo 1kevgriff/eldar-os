@@ -3,7 +3,7 @@
 Holds the credentials agents use, decides what they may run, runs it in
 Eldar's VM, and records everything. Decision record:
 `docs/decisions/0009-supervisor.md`. Code: `supervisor/` (one Go module:
-`server/` is the supervisor, `tui/` and `web/` are Ben's UIs, `api/` is what
+`server/` is the supervisor, `tui/` and `web/` are Kevin's UIs, `api/` is what
 they share). Nix: `modules/supervisor.nix`, configured in
 `hosts/eldar-os/supervisor.nix`.
 
@@ -14,7 +14,7 @@ they share). Nix: `modules/supervisor.nix`, configured in
    credential names it needs, and its session ID and key.
 2. The supervisor decides (why: `docs/decisions/0013-approvals-and-grants.md`),
    in order: authorized cron → lockdown → policy deny
-   → global bypass → policy allow → a grant → ask Ben (TUI, web UI, phone).
+   → global bypass → policy allow → a grant → ask Kevin (TUI, web UI, phone).
 3. If approved, it fetches the named credentials from 1Password (cached per
    profile until cleared) and runs the command in the VM as `ben` over SSH,
    with the credentials exported in a script on stdin.
@@ -59,12 +59,12 @@ A command can name an AWS profile (`awsProfile`; `aws_profile` in
 IAM Identity Center and exports `AWS_*` for that one command. Profiles come
 from `awsConfig`, an ~/.aws/config-style file in the secrets repo. The
 supervisor signs in to each SSO session itself: `supervisor aws-login` (on
-eldar-os, as an admin) prints a link and code Ben approves in a browser; the
+eldar-os, as an admin) prints a link and code Kevin approves in a browser; the
 token, its rotating refresh token and the client registration stay in
 `/var/lib/supervisor/aws/` (mode 600). One sign-in covers every profile of the
 session and lasts until the registration expires (about 90 days) or the
 refresh token stops working; then requests fail with `mint_failed`, telling
-the agent to ask Ben to sign in again. Minted credentials are cached in memory
+the agent to ask Kevin to sign in again. Minted credentials are cached in memory
 until a minute before they expire.
 
 Policy allow rules only cover an AWS request when they name its profile (or
@@ -72,14 +72,14 @@ Policy allow rules only cover an AWS request when they name its profile (or
 
 ## Approval nudges
 
-When a session in a herdr pane is waiting on Ben (a command, a browser
+When a session in a herdr pane is waiting on Kevin (a command, a browser
 window, a grant), herdr shows a notification with the "request" sound:
 `Approval #12 · <session title>` and what it's for. Answering still happens in
 the TUI or web UI; a failed nudge never affects the approval.
 
 ## Devices (a Stream Deck)
 
-Physical controls on Ben's own machines can act through the supervisor: the
+Physical controls on Kevin's own machines can act through the supervisor: the
 first is a Stream Deck on his Mac with Approve and Deny keys
 (`streamdeck/`, a dependency-free plugin). A device is a thin client. It
 talks to the web UI's tailnet node (`/device/...`, `supervisor/web/devices.go`):
@@ -105,9 +105,9 @@ request that arrived since isn't answered by mistake.
   is running it, found by its command whatever the tab is called, or a new
   `supervisor` tab running it if there's none (`supervisor-tui`). A device
   can also focus any herdr tab by name, in Eldar's VM or on the host
-  (`herdr-focus`). Both are always allowed: they only change what Ben sees.
+  (`herdr-focus`). Both are always allowed: they only change what Kevin sees.
   The supervisor drives Eldar's VM's herdr itself; the host's belongs to
-  Ben's login, which the sandboxed supervisor can't reach, so it hands those
+  Kevin's login, which the sandboxed supervisor can't reach, so it hands those
   jobs to the host agent (`supervisor host-agent`, a user service of the
   admin's, `eldar-os.supervisor.hostAgent`). The agent takes jobs over the
   admin socket and runs only the ones coded into it.
@@ -121,9 +121,9 @@ request that arrived since isn't answered by mistake.
 
 ## Commands on other hosts
 
-Agents can run commands on other machines Ben has configured, through the
+Agents can run commands on other machines Kevin has configured, through the
 supervisor: `supervisor_host_exec` (MCP), or `POST /exec` with `target` set to
-the host's name. Ben's Mac (`mac`) is the first. Each host is private config:
+the host's name. Kevin's Mac (`mac`) is the first. Each host is private config:
 `hosts.json` in the secrets repo (`hostsFile`) gives its name, label, a
 description for agents, SSH target, pinned host key and login shell; its
 private key is the sops secret `remote-hosts/<name>`, readable only by the
@@ -145,7 +145,7 @@ appear as ordinary approvals until the UIs list them.
 ## Browsers on other hosts
 
 A host can have a browser agents may drive: a real, logged-in profile (Arc on
-Ben's Mac first), through Playwright MCP running there. `hosts.json` gives the
+Kevin's Mac first), through Playwright MCP running there. `hosts.json` gives the
 host's `browser`: its name, the bridge command on the host
 ([arc-playwright-bridge](https://github.com/benjaminwood/arc-playwright-bridge)
 for Arc), origins never driven or opened (the supervisor's web UIs), and the
@@ -154,7 +154,7 @@ host's tailnet device name. Sessions use the `browser` MCP server
 `browser_open_tab`, `browser_release`, plus Playwright's tools, relayed.
 
 Each window is one session × one profile for some minutes, and always an
-explicit decision by Ben: an approval, or a browser grant he made for that
+explicit decision by Kevin: an approval, or a browser grant he made for that
 session and profile (`host:profile`, e.g. `mac:Default`). Global bypass, eldar
 and host grants never cover it. The session's MCP server holds a random secret
 (only its hash is kept here); it asks with `POST /browser/request` and opens
@@ -170,14 +170,14 @@ drives can't approve anything.
 
 Eldar, the chief-of-staff session, loads two Claude channels from the
 supervisor binary (its watchdog passes them; no other session has them):
-`supervisor channel chat` (Ben's chat from the web UI; `reply` and `history`
+`supervisor channel chat` (Kevin's chat from the web UI; `reply` and `history`
 tools) and `supervisor channel relay` (events from other agents, scripts and
-cron). Other sessions reach Ben with the `notify_ben` tool (in `supervisor
+cron). Other sessions reach Kevin with the `notify_kevin` tool (in `supervisor
 mcp`); scripts and cron with `supervisor notify [--origin WHO] MESSAGE`. Both
 POST `/relay`; the supervisor keeps events in `relay.jsonl` until Eldar's relay
 channel takes them, so nothing is lost while Eldar restarts. Eldar carries
-Ben's answer back with `supervisor tell-agent PANE SESSION MESSAGE`, which
-types `[Ben, via Eldar] …` into that session's herdr pane.
+Kevin's answer back with `supervisor tell-agent PANE SESSION MESSAGE`, which
+types `[Kevin, via Eldar] …` into that session's herdr pane.
 
 Only the Claude session in herdr workspace `primary`, tab `Eldar` may open the
 chat or relay stream, with a per-process key pinned to its session. A channel
@@ -215,7 +215,7 @@ What agents get without asking, named in `ambient.yaml` next to the policy
   asking, like a browser grant for every session (and it survives restarts).
   Windows still last only the minutes asked for.
 - `newTab:` lists hosts where agents may open a tab in any profile without a
-  window (`browser_open_tab` with a `profile`): the page opens for Ben, and
+  window (`browser_open_tab` with a `profile`): the page opens for Kevin, and
   the agent can't see or drive it. Each tab is audited.
 
 Both are audited, the same fetch at most hourly, and refused in lockdown.

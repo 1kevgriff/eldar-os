@@ -24,7 +24,7 @@ func writeJSONAtomic(path string, v any) error {
 	return os.Rename(tmp, path)
 }
 
-// Settings are Ben's preferences, persisted across restarts.
+// Settings are Kevin's preferences, persisted across restarts.
 type Settings struct {
 	path string
 	mu   sync.Mutex

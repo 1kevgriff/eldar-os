@@ -11,7 +11,7 @@ import (
 )
 
 // runDevices lists paired devices (a Stream Deck, ...) or unpairs one.
-// Devices pair themselves; Ben approves each pairing like any other request.
+// Devices pair themselves; Kevin approves each pairing like any other request.
 //
 //	supervisor devices
 //	supervisor devices unpair ID

@@ -231,7 +231,7 @@ func editorFromPending(m *model, p api.Pending) *editor {
 	return e
 }
 
-// editorFromGrantRequest opens a session's proposed grant for Ben to narrow
+// editorFromGrantRequest opens a session's proposed grant for Kevin to narrow
 // before approving it.
 func editorFromGrantRequest(m *model, p api.Pending, g api.GrantInput) *editor {
 	e := newEditor(m, g.Session)

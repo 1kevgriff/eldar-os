@@ -33,22 +33,22 @@ func errorText(s string) map[string]any {
 // The supervisor returns a machine-readable outcome with each failure. The
 // distinctions matter because the right reaction differs: treating a failed
 // notification as a refusal halts work nobody objected to, and treating a
-// refusal as a glitch retries something Ben declined.
+// refusal as a glitch retries something Kevin declined.
 var guidance = map[string]string{
-	"denied": "Ben declined this. Stop. Do not retry and do not work around it.",
-	"timed_out": "The approval window closed with no answer: Ben didn't decline, he was away. Don't retry " +
+	"denied": "Kevin declined this. Stop. Do not retry and do not work around it.",
+	"timed_out": "The approval window closed with no answer: Kevin didn't decline, he was away. Don't retry " +
 		"silently; say there's no answer yet and let him decide when to re-issue.",
-	"undeliverable": "The request never reached Ben: a transport failure, not a refusal. Safe to retry " +
-		"once. If it fails the same way, tell Ben his approval channels are down.",
+	"undeliverable": "The request never reached Kevin: a transport failure, not a refusal. Safe to retry " +
+		"once. If it fails the same way, tell Kevin his approval channels are down.",
 	"blocked_policy": "A policy rule rejected this before anyone saw it. Don't retry, and don't reshape the " +
-		"command to slip past the rule; tell Ben which rule blocked it.",
+		"command to slip past the rule; tell Kevin which rule blocked it.",
 	"credential_missing": "The profile has no credential by that name, so nothing ran. This is a caller bug " +
 		"(a typo or a stale doc), not an outage: check the real names with supervisor_credentials.",
-	"mint_failed": "Minting AWS credentials failed, so nothing ran, and this isn't a refusal: Ben's AWS " +
+	"mint_failed": "Minting AWS credentials failed, so nothing ran, and this isn't a refusal: Kevin's AWS " +
 		"sign-in on the supervisor has lapsed. Don't retry or work around it; ask him to sign in again.",
 	"bad_request": "The call itself was malformed (missing or unknown profile, no command, or something " +
-		"this supervisor doesn't do yet). Fix the call; this isn't something to ask Ben about.",
-	"internal": "Unrecognised supervisor error. Treat it as a stop: don't retry or work around it without asking Ben.",
+		"this supervisor doesn't do yet). Fix the call; this isn't something to ask Kevin about.",
+	"internal": "Unrecognised supervisor error. Treat it as a stop: don't retry or work around it without asking Kevin.",
 }
 
 func failure(data map[string]any) map[string]any {
@@ -67,7 +67,7 @@ func failure(data map[string]any) map[string]any {
 func unreachable(err error) map[string]any {
 	if _, ok := err.(errNoResponse); ok {
 		return errorText("SUPERVISOR REQUEST TIMED_OUT\n\n" + err.Error() + "\n\nNo verdict came back: the request may " +
-			"still be in front of Ben, or the command may still be running. Don't silently retry; check " +
+			"still be in front of Kevin, or the command may still be running. Don't silently retry; check " +
 			"supervisor_audit to see whether it ran.")
 	}
 	return errorText("SUPERVISOR UNREACHABLE\n\n" + err.Error() + "\n\nThe supervisor couldn't be contacted, so " +
@@ -197,7 +197,7 @@ func (s *server) toolList() []tool {
 		{
 			Name: "supervisor_exec",
 			Description: "Run a command with credentials from 1Password, injected for that one run. You never hold " +
-				"the credentials. The supervisor checks the command against policy; most need Ben's approval " +
+				"the credentials. The supervisor checks the command against policy; most need Kevin's approval " +
 				"(he answers in the supervisor's TUI, web UI or on his phone).\n\n" +
 				"The command is plain text and runs verbatim under bash, as `ben` in this VM: write nested " +
 				"quotes, $VARS, heredocs and newlines exactly as they should run. There's no quoting layer.\n\n" +
@@ -208,14 +208,14 @@ func (s *server) toolList() []tool {
 				return object(map[string]any{
 					"command": map[string]any{"type": "string", "description": "The exact command, run under bash. $VARS " +
 						"resolve in that shell, where the credentials are."},
-					"reason": map[string]any{"type": "string", "description": "Shown in Ben's approval prompt. Write it so he " +
+					"reason": map[string]any{"type": "string", "description": "Shown in Kevin's approval prompt. Write it so he " +
 						"can approve at a glance: \"Push the calendar fix to main\", not \"pushing\"."},
 					"profile": profileSchema(profiles, def, "Which 1Password profile the credentials come from. Use the "+
-						"default unless Ben says otherwise. Don't mix profiles in one command; split the work."),
+						"default unless Kevin says otherwise. Don't mix profiles in one command; split the work."),
 					"credentials": map[string]any{"type": "array", "items": map[string]any{"type": "string"},
 						"description": "Credential names to inject, e.g. [\"GITHUB_TOKEN\"]. Pass [] when the command needs " +
 							"no secret: that injects nothing and skips 1Password. ALWAYS pass the field: omitting it " +
-							"injects the profile's entire set and shows Ben a loud warning. Naming one the profile " +
+							"injects the profile's entire set and shows Kevin a loud warning. Naming one the profile " +
 							"lacks is an error that runs nothing."},
 					"cwd": map[string]any{"type": "string", "description": "Working directory. Defaults to this session's " +
 						"project directory. Set this instead of starting the command with `cd`."},
@@ -224,7 +224,7 @@ func (s *server) toolList() []tool {
 						"kubectl authenticate with. Pair it with credentials: [] unless the command also needs a 1Password secret."},
 					"timeout_seconds": map[string]any{"type": "number", "default": defaultTimeoutS,
 						"description": fmt.Sprintf("Wall clock for the command. Default %ds, ceiling %ds. On expiry it's "+
-							"killed and you still get what it printed, flagged as timed out. Ben sees the duration.", defaultTimeoutS, maxTimeoutS)},
+							"killed and you still get what it printed, flagged as timed out. Kevin sees the duration.", defaultTimeoutS, maxTimeoutS)},
 				}, "command", "reason")
 			},
 			run: s.execTool,
@@ -232,8 +232,8 @@ func (s *server) toolList() []tool {
 		{
 			Name: "supervisor_host_exec",
 			describe: func(s *server) string {
-				d := "Run a shell command on another machine Ben has configured (not this VM), through the supervisor. " +
-					"Ben approves each host's commands separately from ones in this VM: expect a prompt unless he has " +
+				d := "Run a shell command on another machine Kevin has configured (not this VM), through the supervisor. " +
+					"Kevin approves each host's commands separately from ones in this VM: expect a prompt unless he has " +
 					"allow-listed the command on that host or made a grant for it. Grants for this VM never cover other hosts.\n\n" +
 					"The command is plain text, run verbatim in the host's login shell: no quoting layer. It runs in the " +
 					"user's home directory unless you set cwd (a path on that host). Use it only for what exists only on that " +
@@ -259,7 +259,7 @@ func (s *server) toolList() []tool {
 				return object(map[string]any{
 					"host":    host,
 					"command": map[string]any{"type": "string", "description": "The exact command to run there."},
-					"reason":  map[string]any{"type": "string", "description": "Shown in Ben's approval prompt: what it does and why, so he can approve at a glance."},
+					"reason":  map[string]any{"type": "string", "description": "Shown in Kevin's approval prompt: what it does and why, so he can approve at a glance."},
 					"cwd":     map[string]any{"type": "string", "description": "Directory on that host, e.g. \"~/code/app\". Defaults to ~."},
 					"profile": profileSchema(profiles, "", "Only with credentials: which 1Password profile they come from."),
 					"credentials": map[string]any{"type": "array", "items": map[string]any{"type": "string"},
@@ -273,10 +273,10 @@ func (s *server) toolList() []tool {
 		{
 			Name: "supervisor_copy",
 			describe: func(s *server) string {
-				d := "Copy one file between this VM and another machine Ben has configured, through the supervisor. " +
+				d := "Copy one file between this VM and another machine Kevin has configured, through the supervisor. " +
 					"The supervisor streams it end to end: the file never passes through your context, and the audit " +
 					"keeps its size and sha256, never its contents. Use it instead of encoding a file into a command.\n\n" +
-					"Ben approves the exact file (size and sha256), so finish writing it before you ask. Sending a file " +
+					"Kevin approves the exact file (size and sha256), so finish writing it before you ask. Sending a file " +
 					"from this VM to a host is covered by that host's grants; pulling one off a host into this VM always " +
 					"asks. In this VM the copy reads and writes as eldar, so use paths eldar can reach (your home, your " +
 					"scratchpad). An existing file is never replaced unless you set overwrite.\n\nTargets: eldar (this VM)"
@@ -293,7 +293,7 @@ func (s *server) toolList() []tool {
 				return object(map[string]any{
 					"from":      map[string]any{"type": "string", "description": "The file to copy, as <target>:<path>, e.g. \"eldar:~/report.csv\". Absolute, or ~/ for that machine's home."},
 					"to":        map[string]any{"type": "string", "description": "Where it goes, as <target>:<path>. A path ending in / is a directory and keeps the file's name, e.g. \"mac:~/Downloads/\"."},
-					"reason":    map[string]any{"type": "string", "description": "Shown in Ben's approval prompt: what the file is and why it's moving."},
+					"reason":    map[string]any{"type": "string", "description": "Shown in Kevin's approval prompt: what the file is and why it's moving."},
 					"overwrite": map[string]any{"type": "boolean", "default": false, "description": "Replace a file already at the destination."},
 				}, "from", "to", "reason")
 			},
@@ -358,9 +358,9 @@ func (s *server) toolList() []tool {
 		},
 		{
 			Name: "supervisor_request_grant",
-			Description: "Ask Ben for a grant covering THIS session's supervisor_exec calls for some minutes, so a " +
+			Description: "Ask Kevin for a grant covering THIS session's supervisor_exec calls for some minutes, so a " +
 				"series of related commands doesn't ask him each time. Ask for the narrowest scope that fits: the " +
-				"exact credentials and the shortest time. \"*\" means any and is flagged to Ben; avoid it unless " +
+				"exact credentials and the shortest time. \"*\" means any and is flagged to Kevin; avoid it unless " +
 				"he asked for broad access. He may approve it, narrow it or deny it; the result says what he " +
 				"granted. A denial means stop: don't retry or work around it.",
 			Schema: func(profiles []string, def string) map[string]any {
@@ -375,7 +375,7 @@ func (s *server) toolList() []tool {
 						"description": "AWS profiles the commands pass as aws_profile ([] = none, the default). A grant without them never covers aws_profile calls.",
 					},
 					"minutes": map[string]any{"type": "number", "description": "Duration, 1-480. Keep it short."},
-					"reason":  map[string]any{"type": "string", "description": "What the work is for. Ben reads this on his phone."},
+					"reason":  map[string]any{"type": "string", "description": "What the work is for. Kevin reads this on his phone."},
 				}, "profile", "credentials", "minutes", "reason")
 			},
 			run: s.grantTool,
@@ -383,7 +383,7 @@ func (s *server) toolList() []tool {
 		{
 			Name: "supervisor_watch_pr",
 			Description: "Call this right after you open a pull request on the eldar-os staging repo (a change to " +
-				"this machine or this VM). Ben approves it by merging; the machine applies it within seconds. When " +
+				"this machine or this VM). Kevin approves it by merging; the machine applies it within seconds. When " +
 				"it's applied (or the apply fails, or the PR is closed unmerged), a message starting \"[eldar-os]\" " +
 				"arrives in this session as your next prompt. Don't poll or wait in a loop: carry on, or stop " +
 				"and wait for that message.",
@@ -396,12 +396,12 @@ func (s *server) toolList() []tool {
 			run: s.watchPRTool,
 		},
 		{
-			Name:        "notify_ben",
+			Name:        "notify_kevin",
 			Description: notifyDescription,
 			Schema: func([]string, string) map[string]any {
 				return object(map[string]any{
 					"message":       map[string]any{"type": "string", "description": "The notification or question, one or two lines, leading with the actionable part."},
-					"expects_reply": map[string]any{"type": "boolean", "description": "true when you're waiting on Ben's answer; Eldar sends it back into this session."},
+					"expects_reply": map[string]any{"type": "boolean", "description": "true when you're waiting on Kevin's answer; Eldar sends it back into this session."},
 					"origin":        map[string]any{"type": "string", "description": "Optional short label of who's sending, e.g. 'deploy script'. Defaults to this session's name."},
 				}, "message")
 			},
@@ -590,7 +590,7 @@ func (s *server) grantTool(ctx context.Context, args map[string]any) map[string]
 		line = fmt.Sprintf("Grant #%v made.", data["grantId"])
 	}
 	if n, _ := data["narrowed"].(bool); n {
-		line += " Ben narrowed the scope: work within what was granted; anything outside it still asks."
+		line += " Kevin narrowed the scope: work within what was granted; anything outside it still asks."
 	}
 	if exp, ok := data["expiresAt"].(float64); ok && exp > 0 {
 		line += " Expires " + time.UnixMilli(int64(exp)).UTC().Format(time.RFC3339) + "."

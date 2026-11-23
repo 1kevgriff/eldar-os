@@ -24,7 +24,7 @@ import (
 //
 // The profiles come from an ~/.aws/config-style file (private: account ids,
 // role names, the SSO start URL). The supervisor signs in to each SSO session
-// itself, with the device-code flow Ben approves in a browser
+// itself, with the device-code flow Kevin approves in a browser
 // (`supervisor aws-login`), and keeps that session's token in its own state
 // (aws/<session>.json, mode 600): access token, rotating refresh token, and
 // the client registration. Minted role credentials are cached in memory
@@ -227,7 +227,7 @@ func (a *AWS) oidc(ctx context.Context, region, path string, in, out any) (strin
 }
 
 // StartLogin begins a device-code sign-in to an SSO session and polls for
-// Ben's approval in the background. The returned login has the URL and code.
+// Kevin's approval in the background. The returned login has the URL and code.
 func (a *AWS) StartLogin(session string, done func(AwsLogin)) (AwsLogin, error) {
 	cfg := a.config()
 	if session == "" && len(cfg.sessions) == 1 {

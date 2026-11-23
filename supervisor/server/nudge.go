@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Approval nudges: when a session in herdr is waiting on Ben, herdr shows a
+// Approval nudges: when a session in herdr is waiting on Kevin, herdr shows a
 // notification (with its "request" sound) saying which approval and what for,
 // so at the desk he sees a stalled session without opening the approval UI.
 // Answering still happens in the supervisor's TUI or web UI. Fire-and-forget:

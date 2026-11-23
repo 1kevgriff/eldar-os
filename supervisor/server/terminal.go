@@ -25,7 +25,7 @@ import (
 //
 // Each one is `herdr terminal attach <terminal> --takeover` in a real PTY in
 // Eldar's VM, as the agent user, over SSH: just that pane's terminal, no herdr
-// chrome, and Ben's desk layout is left alone. Closing the socket closes the
+// chrome, and Kevin's desk layout is left alone. Closing the socket closes the
 // SSH session, which hangs up the attach client.
 
 // TerminalSSH is how the supervisor reaches the VM for terminals.

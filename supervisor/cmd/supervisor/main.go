@@ -1,25 +1,25 @@
 // supervisor holds the agent's credentials and decides what it may run.
 //
 //	supervisor serve   the supervisor itself (a system service)
-//	supervisor         Ben's TUI: approvals, sessions, grants, the global mode
+//	supervisor         Kevin's TUI: approvals, sessions, grants, the global mode
 //	supervisor web     the web UI (on the tailnet, with mobile push)
 //	supervisor mcp     the MCP server agents in Eldar's VM use to reach it (stdio)
-//	supervisor browser MCP server: drive a browser profile on Ben's machines (stdio)
+//	supervisor browser MCP server: drive a browser profile on Kevin's machines (stdio)
 //	supervisor aws-login [session]
-//	                   sign the supervisor in to AWS SSO (Ben approves in a browser)
+//	                   sign the supervisor in to AWS SSO (Kevin approves in a browser)
 //	supervisor channel chat|relay|imessage
-//	                   Eldar's channels (Ben's chat, other agents' notify_ben events),
+//	                   Eldar's channels (Kevin's chat, other agents' notify_kevin events),
 //	                   and iMessage through BlueBubbles for the session the bridge names
 //	supervisor notify [--origin WHO] MESSAGE
 //	                   one-way event to Eldar from a script or cron (or stdin)
 //	supervisor tell-agent PANE SESSION MESSAGE
-//	                   Eldar passes Ben's answer to another Claude session
+//	                   Eldar passes Kevin's answer to another Claude session
 //	supervisor git-credential, supervisor github-token [OWNER]
 //	                   GitHub for git and gh in the VM: an owner's ambient token, or Eldar's App
 //	supervisor host-agent
-//	                   Ben's user service on this machine: jobs that need his login (herdr focus)
+//	                   Kevin's user service on this machine: jobs that need his login (herdr focus)
 //	supervisor devices [unpair ID]
-//	                   paired devices (a Stream Deck); they pair themselves, Ben approves
+//	                   paired devices (a Stream Deck); they pair themselves, Kevin approves
 //	supervisor env [DIR]
 //	                   the ambient environment variables for DIR, for direnv
 //	supervisor tools-relay --grants FILE --stubs DIR
@@ -136,7 +136,7 @@ func main() {
 	socket := flag.String("socket", "", "admin socket path (default: auto-detect)")
 	showVersion := flag.Bool("version", false, "print version")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: supervisor [--socket PATH]   Ben's TUI\n       supervisor web [flags]       the web UI (supervisor web -h)\n       supervisor serve             the supervisor itself\n       supervisor mcp               MCP server for agents (stdio)\n\n")
+		fmt.Fprintf(os.Stderr, "usage: supervisor [--socket PATH]   Kevin's TUI\n       supervisor web [flags]       the web UI (supervisor web -h)\n       supervisor serve             the supervisor itself\n       supervisor mcp               MCP server for agents (stdio)\n\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -146,7 +146,7 @@ func main() {
 	}
 
 	if u, err := user.Current(); err == nil && (u.Username == "eldar" || u.Uid == "1500") {
-		fmt.Fprintln(os.Stderr, "The supervisor TUI is Ben's tool; the agent can't use it.")
+		fmt.Fprintln(os.Stderr, "The supervisor TUI is Kevin's tool; the agent can't use it.")
 		os.Exit(1)
 	}
 

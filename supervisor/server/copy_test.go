@@ -27,7 +27,7 @@ func newCopyTest(t *testing.T) (s *Supervisor, vm, mac string) {
 	r.home = vm
 	key := filepath.Join(t.TempDir(), "mac")
 	os.WriteFile(key, []byte("k"), 0o600)
-	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Ben's Mac", Target: "ben@mac", KeyPath: key}}
+	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Kevin's Mac", Target: "ben@mac", KeyPath: key}}
 	s.cfg.MaxCopyBytes = 1 << 20
 	old := hostCommand
 	hostCommand = func(ctx context.Context, _ *RemoteHost, script string) *exec.Cmd {
@@ -60,7 +60,7 @@ func TestCopyToAHostIsTheApprovedFileAndAuditsNoContent(t *testing.T) {
 			time.Sleep(5 * time.Millisecond)
 		}
 	}()
-	r := s.HandleCopy(context.Background(), CopyRequest{From: "eldar:~/report.csv", To: "mac:~/Downloads/", Reason: "for Ben"})
+	r := s.HandleCopy(context.Background(), CopyRequest{From: "eldar:~/report.csv", To: "mac:~/Downloads/", Reason: "for Kevin"})
 	b := body(t, r)
 	dest := filepath.Join(mac, "Downloads", "report.csv")
 	if r.status != 200 || b["to"] != "mac:"+dest || b["bytes"] != float64(35) {
@@ -70,7 +70,7 @@ func TestCopyToAHostIsTheApprovedFileAndAuditsNoContent(t *testing.T) {
 		t.Fatalf("copied %q", got)
 	}
 	c := seen.Copy
-	if seen.Kind != "copy" || seen.Target != "mac" || c == nil || c.Pull || c.Bytes != 35 || c.SHA256 != b["sha256"] || c.To != "Ben's Mac: "+dest {
+	if seen.Kind != "copy" || seen.Target != "mac" || c == nil || c.Pull || c.Bytes != 35 || c.SHA256 != b["sha256"] || c.To != "Kevin's Mac: "+dest {
 		t.Fatalf("the prompt shows the exact file and where it lands: %+v %+v", seen, c)
 	}
 	audit, _ := os.ReadFile(s.cfg.AuditPath)
@@ -108,7 +108,7 @@ func TestCopyRefusesBeforeAsking(t *testing.T) {
 		}
 	}
 	if p := s.approvals.List(); len(p) != 0 {
-		t.Fatalf("nothing doomed reaches Ben: %v", p)
+		t.Fatalf("nothing doomed reaches Kevin: %v", p)
 	}
 	if got, _ := os.ReadFile(filepath.Join(mac, "Downloads", "a.txt")); string(got) != "old" {
 		t.Fatal("an existing file is never replaced without overwrite")
@@ -141,7 +141,7 @@ func TestCopyKeepsNothingWhenTheFileChangedAfterApproval(t *testing.T) {
 		t.Fatalf("changed file: %d %v", r.status, r.body)
 	}
 	if _, err := os.Stat(filepath.Join(mac, "Downloads", "r.csv")); err == nil {
-		t.Fatal("a file Ben didn't approve was kept")
+		t.Fatal("a file Kevin didn't approve was kept")
 	}
 	if l := leftovers(t, filepath.Join(mac, "Downloads")); len(l) > 0 {
 		t.Fatalf("temp files left: %v", l)

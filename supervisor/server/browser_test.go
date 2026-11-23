@@ -38,7 +38,7 @@ esac
 `)
 	t.Setenv("PATH", dir+":"+os.Getenv("PATH"))
 	os.WriteFile(filepath.Join(dir, "key"), []byte("k"), 0o600)
-	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Ben's Mac", Target: "ben@mac", KeyPath: filepath.Join(dir, "key"),
+	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Kevin's Mac", Target: "ben@mac", KeyPath: filepath.Join(dir, "key"),
 		Browser: &HostBrowser{Name: "Arc", Bridge: filepath.Join(dir, "bridge"), HiddenOrigins: []string{"https://approve.example"}, Device: "macbook"}}}
 	srv := httptest.NewServer(s.agentHandler())
 	t.Cleanup(srv.Close)
@@ -104,7 +104,7 @@ func TestBrowserWindowEndToEnd(t *testing.T) {
 	}
 	s.modes.Revert()
 
-	// A browser grant Ben made for this profile opens it without asking.
+	// A browser grant Kevin made for this profile opens it without asking.
 	s.grants.Add(api.GrantInput{Target: "browser", Session: "*", Profile: "*", Arc: api.Creds{Names: []string{"mac:Default"}}})
 	code, out := postJSON(t, srv.URL+"/browser/request", map[string]any{"host": "mac", "secret": secret, "profile": "Default", "space": testSpace, "sessionId": "sess", "reason": "test"})
 	if code != 200 || out["grantId"] == nil {
@@ -217,7 +217,7 @@ func TestBrowserNewTabWithoutWindow(t *testing.T) {
 		return postJSON(t, srv.URL+"/browser/new-tab", map[string]any{"host": "mac", "profile": profile, "space": space, "url": url, "sessionId": "sess"})
 	}
 	if code, _ := tab("Default", testSpace, "https://example.com/"); code != 403 {
-		t.Fatalf("tab without a window before Ben allowed it: %d", code)
+		t.Fatalf("tab without a window before Kevin allowed it: %d", code)
 	}
 	os.WriteFile(path, []byte("newTab: [mac]\n"), 0o600)
 	if code, out := tab("Default", testSpace, "https://example.com/a"); code != 200 || out["space"] != "Work" {

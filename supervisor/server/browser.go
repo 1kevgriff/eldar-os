@@ -24,7 +24,7 @@ import (
 )
 
 // Browsers on remote hosts: agents drive a real, logged-in browser profile
-// (Arc on Ben's Mac first) through Playwright MCP running on that host, one
+// (Arc on Kevin's Mac first) through Playwright MCP running on that host, one
 // approved window per session, each window bound to one profile.
 //
 // The host runs a browser bridge (github.com/benjaminwood/arc-playwright-bridge
@@ -36,13 +36,13 @@ import (
 //
 // A session's browser MCP server (`supervisor browser`, in the VM) makes a
 // random secret, holds it in memory only, and presents it to ask
-// (POST /browser/request, which puts an approval in front of Ben) and then to
+// (POST /browser/request, which puts an approval in front of Kevin) and then to
 // open its channel (GET /browser/channel, a WebSocket the supervisor pipes to
 // the bridge's stdio over SSH). Only the secret's hash is kept here. When the
 // window ends (expiry, revoke, lockdown) the channel closes and Playwright
 // exits; the next browser call asks again.
 //
-// Invariants: every window is an explicit decision by Ben (an approval, or a
+// Invariants: every window is an explicit decision by Kevin (an approval, or a
 // browser grant he made for that session and profile); global bypass, eldar
 // and host grants and allow lists never cover it. A window's channel always
 // opens the approved profile. browser_run_code_unsafe is withheld (it could
@@ -371,7 +371,7 @@ func (s *Supervisor) browserGrants() []api.BrowserGrant {
 }
 
 // handleBrowserRequest: POST /browser/request — a session asks to drive a
-// profile for some minutes. Waits for Ben (or a covering browser grant).
+// profile for some minutes. Waits for Kevin (or a covering browser grant).
 func (s *Supervisor) handleBrowserRequest(w http.ResponseWriter, r *http.Request) {
 	id := s.nextID()
 	var b struct {
@@ -430,7 +430,7 @@ func (s *Supervisor) handleBrowserRequest(w http.ResponseWriter, r *http.Request
 	}
 	p := profiles[pi]
 	if !p.Ready {
-		bad(409, fmt.Sprintf("%s profile %s on %s isn't set up for agents (extension %s, token %v); ask Ben", h.Browser.Name, p.Name, h.Label, p.Extension, p.Token))
+		bad(409, fmt.Sprintf("%s profile %s on %s isn't set up for agents (extension %s, token %v); ask Kevin", h.Browser.Name, p.Name, h.Label, p.Extension, p.Token))
 		return
 	}
 	var space *BrowserSpace
@@ -470,14 +470,14 @@ func (s *Supervisor) handleBrowserRequest(w http.ResponseWriter, r *http.Request
 		}
 		switch res := s.awaitHuman(id, pend, nil); res {
 		case "approved":
-			why = "Approved by Ben"
+			why = "Approved by Kevin"
 		default:
-			out, msg := OutTimedOut, "Ben didn't answer the browser request in time."
+			out, msg := OutTimedOut, "Kevin didn't answer the browser request in time."
 			switch res {
 			case "denied":
-				out, msg = OutDenied, "Ben denied this browser request. Do not retry, switch profiles, or work around it."
+				out, msg = OutDenied, "Kevin denied this browser request. Do not retry, switch profiles, or work around it."
 			case "undeliverable":
-				out, msg = OutUndeliverable, "The request couldn't be delivered to Ben; nothing was opened."
+				out, msg = OutUndeliverable, "The request couldn't be delivered to Kevin; nothing was opened."
 			}
 			decision := "timeout"
 			if res == "denied" {
@@ -636,7 +636,7 @@ func (s *Supervisor) handleBrowserNewTab(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		if !s.ambientNewTab(h.Name) {
-			sendJSON(w, 403, map[string]any{"error": "Ben hasn't allowed tabs without a window on " + h.Label + "; request access to the profile first"})
+			sendJSON(w, 403, map[string]any{"error": "Kevin hasn't allowed tabs without a window on " + h.Label + "; request access to the profile first"})
 			return
 		}
 		win, hostName, profileID = nil, h.Name, b.Profile
@@ -752,7 +752,7 @@ var errNoWindow = errors.New("no such window")
 
 // revokeWindow ends a window by id (admin).
 func (s *Supervisor) revokeWindow(id int) error {
-	if s.endWindows("revoked by Ben", func(w *browserWindow) bool { return w.id == id }) == 0 {
+	if s.endWindows("revoked by Kevin", func(w *browserWindow) bool { return w.id == id }) == 0 {
 		return errNoWindow
 	}
 	return nil

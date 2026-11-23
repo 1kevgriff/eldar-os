@@ -26,7 +26,7 @@ import (
 // file never passes through an agent's context, and the audit records paths,
 // size and hash, never contents.
 //
-// Ben approves a file by size and sha256, and the destination keeps it only if
+// Kevin approves a file by size and sha256, and the destination keeps it only if
 // what arrived hashes the same, so a file that changes after approval isn't
 // copied. The VM end runs as the agent user: a copy reads and writes only what
 // Eldar could. A host's grants cover sending files to it; pulling a file off a
@@ -338,15 +338,15 @@ func (s *Supervisor) HandleCopy(ctx context.Context, req CopyRequest) response {
 		}, nil)
 		switch result {
 		case "approved":
-			why = "Approved by Ben"
+			why = "Approved by Kevin"
 		case "denied":
-			return deny("denied", "Denied by Ben", OutDenied, "Request denied by Ben. Do NOT retry or attempt to work around this.")
+			return deny("denied", "Denied by Kevin", OutDenied, "Request denied by Kevin. Do NOT retry or attempt to work around this.")
 		case "undeliverable":
 			return deny("timeout", "Approval prompt could not be delivered to any channel", OutUndeliverable,
 				"Approval could not be delivered on any channel — nobody saw this request and nothing was copied. This is NOT a refusal; it is safe to retry once.")
 		default:
 			return deny("timeout", "No response within timeout", OutTimedOut,
-				"Request timed out — Ben did not approve within the timeout window. Do NOT retry. Inform Ben that the request was not approved.")
+				"Request timed out — Kevin did not approve within the timeout window. Do NOT retry. Inform Kevin that the request was not approved.")
 		}
 	}
 

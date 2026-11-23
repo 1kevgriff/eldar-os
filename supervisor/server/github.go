@@ -22,7 +22,7 @@ import (
 
 // GitHubApp is Eldar's identity on GitHub: an App installed on the staging
 // repo that can push branches and open pull requests. A ruleset on main keeps
-// it from merging or pushing there, so Ben's merge stays the approval. The
+// it from merging or pushing there, so Kevin's merge stays the approval. The
 // supervisor holds the App's private key and hands out installation tokens
 // (an hour each, limited to Repos); agents never see the key.
 type GitHubApp struct {
@@ -177,7 +177,7 @@ func (g *GitHubApp) fullName(ctx context.Context, name string) (string, error) {
 
 // handleGitHubToken: GET /github/token, for git's credential helper and gh in
 // the VM. No approval: the App can only propose changes (branches, PRs), and
-// Ben approves them by merging. Each new token is audited.
+// Kevin approves them by merging. Each new token is audited.
 func (s *Supervisor) handleGitHubToken(w http.ResponseWriter, r *http.Request) {
 	g := s.cfg.GitHub
 	if !g.configured() {

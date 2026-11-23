@@ -12,7 +12,7 @@ import (
 // terminal relays a browser WebSocket to the admin API's live terminal.
 // requireUnlock has checked this device's Face ID unlock (passkey.go).
 // websocket.Accept enforces a same-origin Origin header, so a page on another
-// site can't open one in Ben's browser.
+// site can't open one in Kevin's browser.
 func (s *server) terminal(w http.ResponseWriter, r *http.Request) {
 	device := deviceOf(r)
 	pane := r.URL.Query().Get("pane")

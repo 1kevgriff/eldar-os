@@ -101,7 +101,7 @@ func newIMessageTest(t *testing.T, bb *fakeBlueBubbles) *Supervisor {
 	srv := httptest.NewServer(bb.handler(t))
 	t.Cleanup(srv.Close)
 	dir := t.TempDir()
-	cfg := "server: " + srv.URL + "\nsession: { workspace: primary, tab: Family }\ncontacts:\n  - { name: Ben, address: \"(555) 555-0100\" }\n  - { name: Sam, address: \"+15555550111\", direct: false }\n"
+	cfg := "server: " + srv.URL + "\nsession: { workspace: primary, tab: Family }\ncontacts:\n  - { name: Kevin, address: \"(555) 555-0100\" }\n  - { name: Sam, address: \"+15555550111\", direct: false }\n"
 	os.WriteFile(filepath.Join(dir, "imessage.yaml"), []byte(cfg), 0o600)
 	os.WriteFile(filepath.Join(dir, "pw"), []byte("pw\n"), 0o600)
 	s.imessage = NewIMessage(filepath.Join(dir, "imessage.yaml"), filepath.Join(dir, "pw"),
@@ -164,11 +164,11 @@ func TestIMessagePollDeliversOnlyAllowedChats(t *testing.T) {
 		t.Fatal(err)
 	}
 	ev := s.imessage.events
-	if len(ev) != 2 || ev[0].Text != "hello" || ev[0].Name != "Ben" || ev[0].From != "+15555550100" || ev[0].Group {
+	if len(ev) != 2 || ev[0].Text != "hello" || ev[0].Name != "Kevin" || ev[0].From != "+15555550100" || ev[0].Group {
 		t.Fatalf("events %+v", ev)
 	}
 	if g := ev[1]; g.Text != "sam in the family group" || !g.Group || g.Chat != "iMessage;+;fam" || g.ChatName != "Us" ||
-		strings.Join(g.Members, ",") != "Ben,Sam" || g.Name != "Sam" {
+		strings.Join(g.Members, ",") != "Kevin,Sam" || g.Name != "Sam" {
 		t.Fatalf("group event %+v", g)
 	}
 	if s.imessage.state.LastRowID != 18 {

@@ -1,9 +1,9 @@
 // Package mcp holds the MCP servers agents in Eldar's VM use to reach the
 // supervisor, all stdio and all in the `supervisor` binary:
 //
-//	supervisor mcp            every session: supervisor_exec, grants, notify_ben, …
-//	supervisor channel chat   Eldar's session only: Ben's chat (a Claude channel)
-//	supervisor channel relay  Eldar's session only: other agents' notify_ben events
+//	supervisor mcp            every session: supervisor_exec, grants, notify_kevin, …
+//	supervisor channel chat   Eldar's session only: Kevin's chat (a Claude channel)
+//	supervisor channel relay  Eldar's session only: other agents' notify_kevin events
 //	supervisor channel imessage  the session the BlueBubbles bridge names: iMessages
 //
 // They hold nothing themselves; every tool is a call to the supervisor's
@@ -116,7 +116,7 @@ func (s *server) serve(ctx context.Context, in io.Reader, out io.Writer) error {
 			}
 			continue
 		}
-		// Calls can wait minutes for Ben; answer each on its own.
+		// Calls can wait minutes for Kevin; answer each on its own.
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

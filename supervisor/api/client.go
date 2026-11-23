@@ -162,7 +162,7 @@ func (c *Client) RevokeGrant(ctx context.Context, id int) error {
 	return c.do(ctx, "DELETE", fmt.Sprintf("/admin/grants/%d", id), nil, nil)
 }
 
-// ApproveGrantRequest approves a session's grant request with the scope Ben chose.
+// ApproveGrantRequest approves a session's grant request with the scope Kevin chose.
 func (c *Client) ApproveGrantRequest(ctx context.Context, id int, in GrantInput) error {
 	return c.do(ctx, "POST", fmt.Sprintf("/admin/grant-requests/%d/approve", id), in, nil)
 }
@@ -233,7 +233,7 @@ func (c *Client) CloseClaude(ctx context.Context, paneID, session string) error 
 	return c.do(ctx, "POST", "/admin/herdr/close", body, nil)
 }
 
-// TestMac checks the SSH connection to Ben's Mac.
+// TestMac checks the SSH connection to Kevin's Mac.
 func (c *Client) TestMac(ctx context.Context) (MacTest, error) {
 	var t MacTest
 	err := c.do(ctx, "POST", "/admin/mac/test", map[string]any{}, &t)
@@ -265,7 +265,7 @@ func (c *Client) Chat(ctx context.Context, q url.Values) (json.RawMessage, error
 	return out, err
 }
 
-// SendChat posts a message from Ben to Eldar.
+// SendChat posts a message from Kevin to Eldar.
 func (c *Client) SendChat(ctx context.Context, text string) (json.RawMessage, error) {
 	var out json.RawMessage
 	err := c.do(ctx, "POST", "/admin/chat", map[string]string{"text": text}, &out)
@@ -450,7 +450,7 @@ func (c *Client) HostAllow(ctx context.Context, host, pattern string, remove boo
 	return c.do(ctx, method, "/admin/hosts/"+url.PathEscape(host)+"/allow", map[string]string{"pattern": pattern}, nil)
 }
 
-// PairDevice asks Ben to pair a device; it blocks until he answers.
+// PairDevice asks Kevin to pair a device; it blocks until he answers.
 func (c *Client) PairDevice(ctx context.Context, name string, caller DeviceCaller) (Device, string, error) {
 	var out struct {
 		Device Device `json:"device"`

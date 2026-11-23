@@ -49,7 +49,7 @@ type Config struct {
 	DevicesPath               string // paired devices (devices.go); "" = kept in memory only
 	TerminalSSH               TerminalSSH            // live terminals into the VM
 	GitHub                    *GitHubApp             // Eldar's GitHub App; nil = none
-	Hosts                     map[string]*RemoteHost // remote hosts by name (hosts.go); "mac" is Ben's Mac
+	Hosts                     map[string]*RemoteHost // remote hosts by name (hosts.go); "mac" is Kevin's Mac
 	HostsFile                 *HostsFile             // if set, the hosts come from here instead, re-read on change
 	HostAllowPath             string
 	AwsConfigPath             string // ~/.aws/config-style profiles; "" = no AWS
@@ -183,7 +183,7 @@ func (s *Supervisor) Run(ctx context.Context) error {
 	}
 	agentSrv := &http.Server{Handler: s.agentHandler(),
 		// Above the longest command plus the approval window: requests can
-		// legitimately wait on Ben and then run.
+		// legitimately wait on Kevin and then run.
 		WriteTimeout:      s.cfg.MaxCommandTimeout + s.cfg.ApprovalTimeout + time.Minute,
 		ReadHeaderTimeout: 30 * time.Second}
 	adminSrv := &http.Server{Handler: s.adminHandler(), ReadHeaderTimeout: 30 * time.Second}

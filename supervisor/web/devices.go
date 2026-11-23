@@ -12,14 +12,14 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/api"
 )
 
-// Devices are physical controls, such as a Stream Deck on Ben's Mac, that act
+// Devices are physical controls, such as a Stream Deck on Kevin's Mac, that act
 // through the supervisor (server/devices.go). They get the same tailnet check
 // as the UI (one of the allowed user's untagged machines) but no passkey: the
 // device's own token stands in, and the supervisor limits what it can do. A
 // device whose browser an agent drives isn't refused here, as the UI is; the
 // supervisor turns its Approve off instead, and Deny stays useful.
 //
-//	POST /device/pair              {name} → {device, token}, once Ben approves
+//	POST /device/pair              {name} → {device, token}, once Kevin approves
 //	GET  /device/events            what to show, as server-sent events ("view")
 //	POST /device/actions/{action}  a press: approve or deny {ref}, or
 //	                               herdr-focus {args: {herdr, workspace, tab}}| deny
@@ -77,7 +77,7 @@ func (s *server) devicePair(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	// Blocks until Ben answers (or the approval times out).
+	// Blocks until Kevin answers (or the approval times out).
 	dev, token, err := s.cfg.Client.PairDevice(r.Context(), b.Name, caller(r))
 	if err != nil {
 		fail(w, err)

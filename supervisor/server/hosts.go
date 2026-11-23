@@ -19,7 +19,7 @@ import (
 )
 
 // Remote hosts: machines other than Eldar's VM that agents may run commands
-// on, through the supervisor (request target = the host's name). Ben's Mac
+// on, through the supervisor (request target = the host's name). Kevin's Mac
 // ("mac") is the first. Each host is configured privately (hosts.json in the
 // secrets repo: SSH target, pinned host key, login shell, a description for
 // agents) with its own private key, readable only by the supervisor.
@@ -30,7 +30,7 @@ import (
 //
 // Execution: ssh to the host, running its login shell with a script on stdin.
 // The command goes base64-encoded and is decoded there, so what runs is
-// byte-for-byte what Ben approved. Credentials are exported inside that
+// byte-for-byte what Kevin approved. Credentials are exported inside that
 // script, never on a command line. A watchdog kills the command's whole
 // process tree at the timeout. The script is POSIX-shell (bash or zsh).
 
@@ -39,7 +39,7 @@ var validHostName = regexp.MustCompile(`^[a-z][a-z0-9-]{0,30}$`)
 // RemoteHost is one configured host.
 type RemoteHost struct {
 	Name        string       `json:"name"`              // request target, e.g. "mac"
-	Label       string       `json:"label"`             // for Ben, e.g. "Ben's Mac"
+	Label       string       `json:"label"`             // for Kevin, e.g. "Kevin's Mac"
 	Description string       `json:"description"`       // for agents: what it is, what to use it for
 	Target      string       `json:"target"`            // user@host for ssh
 	Shell       string       `json:"shell"`             // e.g. "/bin/zsh -l -s"; default "bash -l -s"
@@ -267,7 +267,7 @@ func (h *RemoteHost) LastTest() *api.MacTest {
 	return h.lastTest
 }
 
-// HostAllow is Ben's "always allow" lists, one per host: globs over the whole
+// HostAllow is Kevin's "always allow" lists, one per host: globs over the whole
 // command (`*` matches anything), persisted in host-allow.json.
 type HostAllow struct {
 	path  string
@@ -478,17 +478,17 @@ func (s *Supervisor) handleHostExec(ctx context.Context, id int, mode api.Mode, 
 		}, func() { s.hostAllow.Add(h.Name, pattern) })
 		switch result {
 		case "approved":
-			why = "Approved by Ben"
+			why = "Approved by Kevin"
 		case "allow_always":
-			why = "Approved by Ben + " + h.Label + " allow list: " + pattern
+			why = "Approved by Kevin + " + h.Label + " allow list: " + pattern
 		case "denied":
-			return deny("denied", "Denied by Ben", OutDenied, "Request denied by Ben. Do NOT retry or attempt to work around this.")
+			return deny("denied", "Denied by Kevin", OutDenied, "Request denied by Kevin. Do NOT retry or attempt to work around this.")
 		case "undeliverable":
 			return deny("timeout", "Approval prompt could not be delivered to any channel", OutUndeliverable,
 				"Approval could not be delivered on any channel — nobody saw this request and nothing was executed. This is NOT a refusal; it is safe to retry once.")
 		default:
 			return deny("timeout", "No response within timeout", OutTimedOut,
-				"Request timed out — Ben did not approve within the timeout window. Do NOT retry. Inform Ben that the request was not approved.")
+				"Request timed out — Kevin did not approve within the timeout window. Do NOT retry. Inform Kevin that the request was not approved.")
 		}
 	}
 
@@ -504,7 +504,7 @@ func (s *Supervisor) handleHostExec(ctx context.Context, id int, mode api.Mode, 
 			e := base
 			e.Decision, e.DecisionReason = "deny", "Credential fetch failed: "+err.Error()
 			s.audit.Log(e)
-			return fail(502, id, out, "Credential fetch from 1Password failed. The command was NOT executed. Inform Ben.", "detail", err.Error())
+			return fail(502, id, out, "Credential fetch from 1Password failed. The command was NOT executed. Inform Kevin.", "detail", err.Error())
 		}
 		env = c
 	}

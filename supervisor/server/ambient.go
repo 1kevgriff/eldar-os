@@ -139,7 +139,7 @@ func (a *Ambient) due(key string) bool {
 
 func (s *Supervisor) ambientLocked() (response, bool) {
 	if mode, _ := s.modes.Status(); mode == api.ModeLockdown {
-		return response{403, map[string]any{"error": "Lockdown: no credentials are handed out until Ben lifts it.", "outcome": OutBlockedPolicy}}, true
+		return response{403, map[string]any{"error": "Lockdown: no credentials are handed out until Kevin lifts it.", "outcome": OutBlockedPolicy}}, true
 	}
 	return response{}, false
 }

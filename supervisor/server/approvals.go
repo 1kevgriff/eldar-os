@@ -7,7 +7,7 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/api"
 )
 
-// Approvals are prompts waiting on Ben, answered from the admin API (TUI, web
+// Approvals are prompts waiting on Kevin, answered from the admin API (TUI, web
 // UI, phone). Reachable only through the admin socket, never the agent's port.
 type Approvals struct {
 	mu      sync.Mutex
@@ -24,7 +24,7 @@ func NewApprovals(n *Notifier) *Approvals {
 	return &Approvals{entries: map[int]*approvalEntry{}, n: n}
 }
 
-// Add registers a prompt; the channel receives Ben's decision.
+// Add registers a prompt; the channel receives Kevin's decision.
 func (a *Approvals) Add(info api.Pending) <-chan api.Decision {
 	ch := make(chan api.Decision, 1)
 	a.mu.Lock()

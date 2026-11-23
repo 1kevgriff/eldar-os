@@ -139,7 +139,7 @@ func (s *Supervisor) adminHandler() http.Handler {
 	mux.HandleFunc("GET /admin/state", func(w http.ResponseWriter, r *http.Request) { sendJSON(w, 200, s.Snapshot()) })
 	// From the apply service (root): an apply finished; tell sessions whose PRs it contains.
 	mux.HandleFunc("POST /admin/applied", s.handleApplied)
-	// AWS: sign the supervisor in to an SSO session (device code Ben approves).
+	// AWS: sign the supervisor in to an SSO session (device code Kevin approves).
 	mux.HandleFunc("GET /admin/aws", func(w http.ResponseWriter, r *http.Request) {
 		sendJSON(w, 200, map[string]any{"sessions": s.aws.Status(), "profiles": s.aws.Profiles()})
 	})
@@ -166,7 +166,7 @@ func (s *Supervisor) adminHandler() http.Handler {
 			sendJSON(w, 404, map[string]any{"error": err.Error()})
 			return
 		}
-		s.adminLog(r, fmt.Sprintf("BROWSER REVOKE #%d", id), "Browser window ended by Ben")
+		s.adminLog(r, fmt.Sprintf("BROWSER REVOKE #%d", id), "Browser window ended by Kevin")
 		sendJSON(w, 200, map[string]any{"ok": true})
 	})
 	// Remote hosts: /admin/hosts/{name}/test and …/allow; /admin/mac/… is the
@@ -366,7 +366,7 @@ func (s *Supervisor) adminHandler() http.Handler {
 			sendJSON(w, 404, map[string]any{"error": "no such device"})
 			return
 		}
-		s.adminLog(r, fmt.Sprintf("DEVICE #%d unpaired", id), "Unpaired by Ben")
+		s.adminLog(r, fmt.Sprintf("DEVICE #%d unpaired", id), "Unpaired by Kevin")
 		sendJSON(w, 200, map[string]any{"ok": true})
 	})
 	mux.HandleFunc("POST /admin/mode", func(w http.ResponseWriter, r *http.Request) {
@@ -541,7 +541,7 @@ func (s *Supervisor) adminHandler() http.Handler {
 		s.adminLog(r, "UNPIN SESSION "+id, "Session key unpinned; next request re-pins")
 		sendJSON(w, 200, map[string]any{"ok": true})
 	})
-	// herdr: Ben's workspaces in Eldar's VM.
+	// herdr: Kevin's workspaces in Eldar's VM.
 	herdrSession := func(v string) string {
 		if v == "" {
 			return s.herdr.DefaultSession

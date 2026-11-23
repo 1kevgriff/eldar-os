@@ -19,9 +19,9 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/api"
 )
 
-// Devices are physical controls on Ben's own machines, such as a Stream Deck
+// Devices are physical controls on Kevin's own machines, such as a Stream Deck
 // on his Mac. A device reaches the supervisor through the web UI's tailnet node
-// (which checks the caller is one of Ben's untagged machines) and presents its
+// (which checks the caller is one of Kevin's untagged machines) and presents its
 // own token; it never sees the admin API. The supervisor decides what each
 // device shows and what a press does (DeviceView, DeviceAction), so a device
 // is a thin client and new controls are added here.
@@ -241,7 +241,7 @@ func (s *Supervisor) deviceView(dev api.Device, browserDriven bool) api.DeviceVi
 // DeviceAction runs a press. For approve and deny, ref is the request the
 // device showed, so one that arrived since isn't answered by mistake;
 // herdr-focus takes args herdr (host | eldar), tab and optionally workspace;
-// supervisor-tui brings up the supervisor TUI in Ben's herdr on the host.
+// supervisor-tui brings up the supervisor TUI in Kevin's herdr on the host.
 func (s *Supervisor) DeviceAction(ctx context.Context, c api.DeviceCaller, action string, ref int, args map[string]string) (int, string) {
 	dev, ok := s.devices.Authenticate(c.Token, c.Node)
 	if !ok {
@@ -250,7 +250,7 @@ func (s *Supervisor) DeviceAction(ctx context.Context, c api.DeviceCaller, actio
 	if !slices.Contains(deviceActions, action) {
 		return 400, fmt.Sprintf("unknown action %q", action)
 	}
-	// These only change what Ben is looking at, so they're always allowed.
+	// These only change what Kevin is looking at, so they're always allowed.
 	switch action {
 	case "supervisor-tui":
 		if err := s.openSupervisorTUI(ctx); err != nil {
@@ -285,7 +285,7 @@ func (s *Supervisor) DeviceAction(ctx context.Context, c api.DeviceCaller, actio
 	return 200, ""
 }
 
-// PairDevice asks Ben to pair a device and waits for his answer. On approval
+// PairDevice asks Kevin to pair a device and waits for his answer. On approval
 // it returns the device and its token, which the caller hands to the device.
 func (s *Supervisor) PairDevice(name string, c api.DeviceCaller) (api.Device, string, int, string) {
 	name = strings.TrimSpace(truncRunes(name, 60))
@@ -315,6 +315,6 @@ func (s *Supervisor) PairDevice(name string, c api.DeviceCaller) (api.Device, st
 		return api.Device{}, "", 403, "pairing was not approved (" + result + ")"
 	}
 	dev, token := s.devices.Add(name, node, host)
-	s.audit.Log(AuditEntry{RequestID: id, Action: fmt.Sprintf("PAIR DEVICE #%d %q on %s", dev.ID, name, where), Decision: "approved", DecisionReason: "Approved by Ben", Mode: string(s.modes.Current())})
+	s.audit.Log(AuditEntry{RequestID: id, Action: fmt.Sprintf("PAIR DEVICE #%d %q on %s", dev.ID, name, where), Decision: "approved", DecisionReason: "Approved by Kevin", Mode: string(s.modes.Current())})
 	return dev, token, 200, ""
 }

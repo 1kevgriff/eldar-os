@@ -24,7 +24,7 @@ import (
 
 // iMessage, through a BlueBubbles server on a Mac: the chat interface of an
 // agent with its own Apple ID (a family agent, not Eldar). The supervisor is
-// the only path between them, as with Ben's chat:
+// the only path between them, as with Kevin's chat:
 //
 //   - In: it polls BlueBubbles for new messages and keeps those in allowed
 //     chats until the agent's `imessage` channel takes them from
@@ -41,7 +41,7 @@ import (
 //	server: http://mac.local:1234
 //	session: { workspace: primary, tab: Family }
 //	contacts:
-//	  - { name: Ben, address: "+15555550100" }   # a phone number or an Apple ID email
+//	  - { name: Kevin, address: "+15555550100" }   # a phone number or an Apple ID email
 //	  - { name: Sam, address: "sam@example.com", direct: false }
 //
 // Allowed chats: a direct chat with a contact (unless `direct: false`), and a

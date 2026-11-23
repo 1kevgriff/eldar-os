@@ -13,12 +13,12 @@ import (
 	"time"
 )
 
-// The relay: other agents (notify_ben), scripts and cron reach Ben through
+// The relay: other agents (notify_kevin), scripts and cron reach Kevin through
 // Eldar, the chief-of-staff session. Anything in Eldar's VM may POST /relay;
 // the supervisor keeps each event until Eldar's `relay` channel takes it from
 // GET /relay/stream (only Eldar's session, with its pinned key, like the chat),
 // so events sent while Eldar restarts are delivered when it's back. Eldar
-// treats them as data: it tells Ben, and acts on his answer.
+// treats them as data: it tells Kevin, and acts on his answer.
 //
 // Files (supervisor state): relay.jsonl (append-only) and relay-state.json
 // ({deliveredUpTo}).

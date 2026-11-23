@@ -65,7 +65,7 @@ func (m *model) settingIndex(rows []settingRow) int {
 	return -1
 }
 
-// hosts: remote hosts agents may run commands on (Ben's Mac is "mac").
+// hosts: remote hosts agents may run commands on (Kevin's Mac is "mac").
 func (m *model) hosts() []api.HostStatus {
 	var out []api.HostStatus
 	for _, h := range m.st.Hosts {

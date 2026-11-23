@@ -248,7 +248,7 @@ func TestGrantRequestFlow(t *testing.T) {
 	m := 30.0
 	b := GrantRequestBody{Profile: "work", Credentials: json.RawMessage(`["GITHUB_TOKEN"]`), Minutes: &m, SessionID: "s1", SessionKey: "k", Reason: "PRs"}
 
-	// Ben narrows it in the editor.
+	// Kevin narrows it in the editor.
 	go func() {
 		for i := 0; i < 100; i++ {
 			if p := s.approvals.List(); len(p) > 0 {

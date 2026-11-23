@@ -35,7 +35,7 @@ type errUnreachable struct{ msg string }
 func (e errUnreachable) Error() string { return e.msg }
 
 // errNoResponse: the request went out but no answer came in time; the
-// command may still be waiting for Ben or running.
+// command may still be waiting for Kevin or running.
 type errNoResponse struct{ msg string }
 
 func (e errNoResponse) Error() string { return e.msg }
@@ -114,7 +114,7 @@ func (c *client) post(ctx context.Context, path string, body any, timeout time.D
 }
 
 // approvalContext tells the supervisor which herdr pane the session runs in,
-// so the approval can point Ben at it.
+// so the approval can point Kevin at it.
 func approvalContext() map[string]any {
 	pane, socket := os.Getenv("HERDR_PANE_ID"), os.Getenv("HERDR_SOCKET_PATH")
 	if pane == "" || socket == "" {

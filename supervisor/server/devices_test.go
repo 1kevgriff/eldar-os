@@ -15,7 +15,7 @@ func pairTest(t *testing.T) (*Supervisor, api.DeviceCaller) {
 	s, _ := newTest(t)
 	s.cfg.ApprovalTimeout = 2 * time.Second
 	s.devices = NewDevices(filepath.Join(t.TempDir(), "devices.json"), s.n)
-	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Ben's Mac", Target: "ben@100.64.0.5"}}
+	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Kevin's Mac", Target: "ben@100.64.0.5"}}
 	c := api.DeviceCaller{Node: "bens-mbp.example.ts.net.", IPs: []string{"100.64.0.5", "fd7a::5"}}
 	answer(s, api.Approve)
 	dev, token, status, msg := s.PairDevice("Stream Deck", c)

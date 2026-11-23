@@ -12,13 +12,13 @@ import (
 	"time"
 )
 
-// The host agent does small things as Ben on the supervisor's own machine,
+// The host agent does small things as Kevin on the supervisor's own machine,
 // for actions that need his login there: the supervisor service itself is
 // sandboxed (no sudo, no home directory), which it should stay. It's
-// `supervisor host-agent`, a user service of Ben's that connects to the admin
+// `supervisor host-agent`, a user service of Kevin's that connects to the admin
 // socket (only the supervisor-admin group can) and takes jobs from
 // GET /admin/host-agent. It runs only the fixed jobs it knows, never a command
-// it's sent. Today that's focusing a tab in Ben's herdr on the host.
+// it's sent. Today that's focusing a tab in Kevin's herdr on the host.
 
 // HostJob is one job for the host agent.
 type HostJob struct {
@@ -174,7 +174,7 @@ func FindHerdrTab(snapshot json.RawMessage, workspace, tab string) (string, erro
 }
 
 // focusHerdrTab focuses a tab in one of the herdrs a device can steer:
-// "host" (Ben's, through the host agent) or "eldar" (the one in Eldar's VM,
+// "host" (Kevin's, through the host agent) or "eldar" (the one in Eldar's VM,
 // which the supervisor drives itself).
 func (s *Supervisor) focusHerdrTab(ctx context.Context, which, workspace, tab string) error {
 	if tab == "" || len(tab) > 80 || len(workspace) > 80 {
@@ -243,7 +243,7 @@ func IsSupervisorTUI(argv []string) bool {
 	return len(argv) == 1 || strings.HasPrefix(argv[1], "-")
 }
 
-// openSupervisorTUI brings up the supervisor TUI in Ben's herdr on the host:
+// openSupervisorTUI brings up the supervisor TUI in Kevin's herdr on the host:
 // the tab whose pane is running it (found by its command, not the tab's
 // name), or a new "supervisor" tab running it if there's none.
 func (s *Supervisor) openSupervisorTUI(ctx context.Context) error {

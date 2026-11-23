@@ -48,7 +48,7 @@ type Config struct {
 	Listen      string // optional plain-HTTP listener for local development, e.g. 127.0.0.1:8080
 	StaticDir   string // serve UI files from disk instead of the embedded copy (live editing)
 	// BrowserDevice is the tailnet machine whose browser Eldar can drive (Arc on
-	// Ben's Mac). While any Arc window is approved, that device is refused, so a
+	// Kevin's Mac). While any Arc window is approved, that device is refused, so a
 	// page Eldar controls can't answer its own approvals.
 	BrowserDevice string
 	// StreamHost is the tailnet machine serving the agents' own browser stream
@@ -570,7 +570,7 @@ func (s *server) herdrLaunch(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	in.Session = "" // the web UI only ever manages Ben's real session
+	in.Session = "" // the web UI only ever manages Kevin's real session
 	out, err := s.cfg.Client.LaunchClaude(r.Context(), in)
 	if err != nil {
 		fail(w, err)

@@ -18,12 +18,12 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/api"
 )
 
-// Ben's chat with Eldar, the chief-of-staff Claude session. Ben writes from the
+// Kevin's chat with Eldar, the chief-of-staff Claude session. Kevin writes from the
 // web UI (admin API); Eldar reads and replies through the `chat` channel MCP
 // server in its session (agent API). The supervisor is the only path between
 // them: a message from "ben" can only come through the admin socket, and only
 // the chief-of-staff session (the Claude pane in herdr workspace ChatWorkspace,
-// tab ChatTab) presenting its pinned chat key can read Ben's messages or reply.
+// tab ChatTab) presenting its pinned chat key can read Kevin's messages or reply.
 //
 // Files (supervisor state, invisible to the agent): chat.jsonl (one message
 // per line, append-only) and chat-state.json ({readUpTo, deliveredUpTo}).
@@ -34,8 +34,8 @@ const (
 )
 
 type chatState struct {
-	ReadUpTo      int `json:"readUpTo"`      // Eldar's messages Ben has seen
-	DeliveredUpTo int `json:"deliveredUpTo"` // Ben's messages handed to Eldar's channel
+	ReadUpTo      int `json:"readUpTo"`      // Eldar's messages Kevin has seen
+	DeliveredUpTo int `json:"deliveredUpTo"` // Kevin's messages handed to Eldar's channel
 }
 
 type Chat struct {
@@ -326,7 +326,7 @@ func (s *Supervisor) chatRoutes(mux *http.ServeMux) {
 			h(w, r, session)
 		}
 	}
-	// Ben's undelivered messages, then each new one, as server-sent events.
+	// Kevin's undelivered messages, then each new one, as server-sent events.
 	mux.HandleFunc("GET /chat/stream", func(w http.ResponseWriter, r *http.Request) {
 		s.chat.mu.Lock()
 		idle := s.chat.stream == nil

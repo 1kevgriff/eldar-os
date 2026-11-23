@@ -9,8 +9,8 @@ import (
 	"github.com/benjaminwood/eldar-os/supervisor/api"
 )
 
-// A session asks Ben for a grant covering its own future requests: one target
-// with the same scope a grant Ben makes has. Ben approves it as asked, narrows
+// A session asks Kevin for a grant covering its own future requests: one target
+// with the same scope a grant Kevin makes has. Kevin approves it as asked, narrows
 // it in the grant editor first, or denies it. Approval creates an ordinary
 // grant for that session. The session must present its pinned key, since
 // session-specific grants only match verified requests.
@@ -167,7 +167,7 @@ func (s *Supervisor) HandleGrantRequest(b GrantRequestBody, legacy string) respo
 		action = "grant request"
 	}
 	if !s.sessions.Touch(b.SessionID, b.SessionKey, TouchMeta{Cwd: b.Cwd, HerdrPane: b.Context.herdrPane(), Action: action}) {
-		return bad(403, "This session's key doesn't match the one the supervisor pinned, so a grant for it would never apply. Ask Ben to re-pin the session.")
+		return bad(403, "This session's key doesn't match the one the supervisor pinned, so a grant for it would never apply. Ask Kevin to re-pin the session.")
 	}
 	proposal, why := s.grantScope(b, minutes)
 	if why != "" {
@@ -197,24 +197,24 @@ func (s *Supervisor) HandleGrantRequest(b GrantRequestBody, legacy string) respo
 		}
 		g := s.grants.Add(input)
 		granted := s.describeScope(input)
-		why := "Approved by Ben as requested"
+		why := "Approved by Kevin as requested"
 		if narrowed {
-			why = "Approved by Ben, narrowed in the grant editor"
+			why = "Approved by Kevin, narrowed in the grant editor"
 		}
 		s.audit.Log(AuditEntry{RequestID: id, Action: fmt.Sprintf("GRANT #%d (requested) %s", g.ID, granted), Reason: b.Reason, Decision: "approved", DecisionReason: why, Mode: string(mode), SessionID: b.SessionID})
 		msg := fmt.Sprintf("Grant #%d for this session", g.ID)
 		if narrowed {
-			msg += " (Ben changed the scope)"
+			msg += " (Kevin changed the scope)"
 		}
 		return response{200, map[string]any{
 			"requestId": id, "grantId": g.ID, "scopeId": g.ID, "expiresAt": g.ExpiresAt, "grant": g,
 			"narrowed": narrowed, "message": msg + ": " + granted + ".",
 		}}
 	}
-	decision, why, out, msg := "timeout", "No response within timeout", OutTimedOut, "Ben didn't answer the grant request."
+	decision, why, out, msg := "timeout", "No response within timeout", OutTimedOut, "Kevin didn't answer the grant request."
 	switch result {
 	case "denied":
-		decision, why, out, msg = "denied", "Denied by Ben", OutDenied, "Ben denied the grant request. Don't retry or work around it."
+		decision, why, out, msg = "denied", "Denied by Kevin", OutDenied, "Kevin denied the grant request. Don't retry or work around it."
 	case "undeliverable":
 		why, out, msg = "Approval prompt could not be delivered", OutUndeliverable, "The grant request couldn't be delivered; safe to retry once."
 	}
@@ -230,7 +230,7 @@ func (s *Supervisor) takeOverride(id int) (api.GrantInput, bool) {
 	return g, ok
 }
 
-// ApproveGrantRequest approves a pending grant request with the scope Ben
+// ApproveGrantRequest approves a pending grant request with the scope Kevin
 // chose in the editor.
 func (s *Supervisor) ApproveGrantRequest(id int, in api.GrantInput) bool {
 	p, ok := s.approvals.Get(id)

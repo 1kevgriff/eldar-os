@@ -61,13 +61,13 @@ func TestLoadHosts(t *testing.T) {
 			t.Fatalf("host name %q accepted", bad)
 		}
 	}
-	hosts, err := LoadHosts(write([]map[string]string{{"name": "mac", "label": "Ben's Mac", "target": "ben@10.0.0.9", "hostKey": "ssh-ed25519 KEY", "shell": "/bin/zsh -l -s"}}), dir, dir)
+	hosts, err := LoadHosts(write([]map[string]string{{"name": "mac", "label": "Kevin's Mac", "target": "ben@10.0.0.9", "hostKey": "ssh-ed25519 KEY", "shell": "/bin/zsh -l -s"}}), dir, dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	h := hosts["mac"]
 	kh, _ := os.ReadFile(h.KnownHosts)
-	if h.Label != "Ben's Mac" || h.Shell != "/bin/zsh -l -s" || string(kh) != "10.0.0.9 ssh-ed25519 KEY\n" || h.Configured() {
+	if h.Label != "Kevin's Mac" || h.Shell != "/bin/zsh -l -s" || string(kh) != "10.0.0.9 ssh-ed25519 KEY\n" || h.Configured() {
 		t.Fatalf("host %+v, known_hosts %q", h, kh)
 	}
 	os.WriteFile(filepath.Join(dir, "mac"), []byte("k"), 0o600)
@@ -83,7 +83,7 @@ func TestHostExecDecisions(t *testing.T) {
 	s, _ := newTest(t)
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "mac"), []byte("k"), 0o600)
-	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Ben's Mac", Target: "ben@mac", KeyPath: filepath.Join(dir, "mac")},
+	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Kevin's Mac", Target: "ben@mac", KeyPath: filepath.Join(dir, "mac")},
 		"nas": {Name: "nas", Label: "NAS", Target: "ben@nas", KeyPath: filepath.Join(dir, "nas")}}
 	s.hostAllow = NewHostAllow(filepath.Join(dir, "allow.json"))
 	ctx := context.Background()
@@ -109,7 +109,7 @@ func TestHostExecDecisions(t *testing.T) {
 
 func TestHostGrants(t *testing.T) {
 	s, _ := newTest(t)
-	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Ben's Mac"}}
+	s.cfg.Hosts = map[string]*RemoteHost{"mac": {Name: "mac", Label: "Kevin's Mac"}}
 	if _, msg := s.parseAdminGrant(adminGrantBody{Target: "mac", Session: "*", Minutes: ptr(10.0)}); msg != "" {
 		t.Fatalf("mac grant: %s", msg)
 	}

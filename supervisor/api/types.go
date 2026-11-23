@@ -25,7 +25,7 @@ const (
 	ModeLockdown Mode = "lockdown"
 )
 
-// Pending is an approval waiting on Ben.
+// Pending is an approval waiting on Kevin.
 type Pending struct {
 	ID              int         `json:"id"`
 	Kind            string      `json:"kind"` // exec | browser | grant_request | copy
@@ -52,7 +52,7 @@ type Pending struct {
 	ExpiresAt       int64       `json:"expiresAt"`
 }
 
-// CopyInfo describes a file copy waiting for approval. Ben approves this exact
+// CopyInfo describes a file copy waiting for approval. Kevin approves this exact
 // file: the destination keeps it only if it still hashes to SHA256.
 type CopyInfo struct {
 	From      string `json:"from"` // "<label>: <path>"
@@ -88,7 +88,7 @@ type HerdrPane struct {
 	Focused   bool   `json:"focused"`
 }
 
-// Grant is a bypass grant Ben created.
+// Grant is a bypass grant Kevin created.
 type Grant struct {
 	ID          int      `json:"id"`
 	Target      string   `json:"target"`  // eldar | mac | browser
@@ -129,14 +129,14 @@ type State struct {
 	Viewers       int            `json:"viewers"`
 }
 
-// ArcProfile is an Arc profile on Ben's Mac, as last read by the proxy.
+// ArcProfile is an Arc profile on Kevin's Mac, as last read by the proxy.
 type ArcProfile struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Ready bool   `json:"ready"`
 }
 
-// ChatMessage is one message in Ben's chat with Eldar, the chief-of-staff session.
+// ChatMessage is one message in Kevin's chat with Eldar, the chief-of-staff session.
 type ChatMessage struct {
 	ID   int    `json:"id"`
 	From string `json:"from"` // "ben" | "eldar"
@@ -169,7 +169,7 @@ type CacheEntry struct {
 	CachedAt int64  `json:"cachedAt"`
 }
 
-// Settings are Ben's persisted proxy preferences.
+// Settings are Kevin's persisted proxy preferences.
 type Settings struct {
 	MobilePush bool `json:"mobilePush"` // web UI pushes new approvals and sign-ins to subscribed devices
 }
@@ -182,7 +182,7 @@ type MCPServer struct {
 	ExpiresAt *int64 `json:"expiresAt"`
 }
 
-// MCPSignIn is an MCP OAuth authorization waiting for Ben to sign in.
+// MCPSignIn is an MCP OAuth authorization waiting for Kevin to sign in.
 type MCPSignIn struct {
 	Name      string `json:"name"`
 	ServerURL string `json:"serverUrl"`
@@ -195,7 +195,7 @@ type MCPSummary struct {
 	Pending []MCPSignIn `json:"pending"`
 }
 
-// HerdrView is Ben's herdr session: workspaces ("spaces") → tabs → panes.
+// HerdrView is Kevin's herdr session: workspaces ("spaces") → tabs → panes.
 type HerdrView struct {
 	Session string       `json:"session"`
 	OK      bool         `json:"ok"`
@@ -242,7 +242,7 @@ type BrowserGrant struct {
 	ID        int    `json:"id"`
 	SessionID string `json:"sessionId,omitempty"`
 	Client    string `json:"client"`
-	// Profile is the Arc profile directory; ProfileName is how Ben knows it (its spaces).
+	// Profile is the Arc profile directory; ProfileName is how Kevin knows it (its spaces).
 	Profile     string `json:"profile"`
 	ProfileName string `json:"profileName"`
 	Host        string `json:"host,omitempty"`   // the remote host whose browser it is
@@ -265,7 +265,7 @@ type HostStatus struct {
 	Allow       []string `json:"allow"`
 }
 
-// MacStatus is the supervisor's view of Ben's Mac (the host "mac").
+// MacStatus is the supervisor's view of Kevin's Mac (the host "mac").
 type MacStatus struct {
 	Configured bool     `json:"configured"`
 	Host       string   `json:"host"`
@@ -285,7 +285,7 @@ type LaunchInput struct {
 	Name            string `json:"name"`
 	Cwd             string `json:"cwd,omitempty"`
 	SkipPermissions bool   `json:"skipPermissions"`
-	Session         string `json:"session,omitempty"` // herdr session; default is Ben's
+	Session         string `json:"session,omitempty"` // herdr session; default is Kevin's
 }
 
 // Cron is a cron job allowed to auto-approve its requests while it runs.
@@ -363,7 +363,7 @@ func (e AuditEntry) CredsSummary() string {
 }
 
 // Device is a physical control paired with the supervisor (a Stream Deck on
-// Ben's Mac). It reaches the supervisor through the web UI's tailnet node with
+// Kevin's Mac). It reaches the supervisor through the web UI's tailnet node with
 // its own token, and can only do what the supervisor offers it (DeviceView).
 type Device struct {
 	ID        int    `json:"id"`

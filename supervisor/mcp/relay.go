@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-// The relay: other agents, scripts and cron reach Ben through Eldar. An event
+// The relay: other agents, scripts and cron reach Kevin through Eldar. An event
 // goes to the supervisor (POST /relay), which holds it until Eldar's relay
-// channel takes it; Eldar tells Ben in the chat, and carries his answer back
+// channel takes it; Eldar tells Kevin in the chat, and carries his answer back
 // with `supervisor tell-agent`.
 
 type relayEvent struct {
@@ -70,7 +70,7 @@ func herdrPanes(ctx context.Context) ([]herdrPane, error) {
 	return r.Result.Panes, nil
 }
 
-// notifyTool is notify_ben, in every session's supervisor MCP server.
+// notifyTool is notify_kevin, in every session's supervisor MCP server.
 func (s *server) notifyTool(ctx context.Context, args map[string]any) map[string]any {
 	msg := str(args, "message")
 	if strings.TrimSpace(msg) == "" {
@@ -94,7 +94,7 @@ func (s *server) notifyTool(ctx context.Context, args map[string]any) map[string
 		ev.Origin = ev.SessionName
 	}
 	if ev.Origin == "" {
-		ev.Origin = "notify_ben"
+		ev.Origin = "notify_kevin"
 	}
 	if err := s.c.relay(ctx, ev); err != nil {
 		return errorText("Couldn't reach Eldar through the supervisor: " + err.Error())
@@ -102,18 +102,18 @@ func (s *server) notifyTool(ctx context.Context, args map[string]any) map[string
 	note := ""
 	if ev.ExpectsReply {
 		if ev.SessionID != "" && ev.PaneID != "" {
-			note = ` His answer will arrive in this session as a message starting "[Ben, via Eldar]".`
+			note = ` His answer will arrive in this session as a message starting "[Kevin, via Eldar]".`
 		} else {
 			note = " This session isn't in a herdr pane, so Eldar can't type his answer back here."
 		}
 	}
-	return textResult("Delivered; Eldar will tell Ben." + note)
+	return textResult("Delivered; Eldar will tell Kevin." + note)
 }
 
-const notifyDescription = "Message Ben through Eldar, his chief-of-staff agent. Eldar tells him in his chat (a push to his phone) and, " +
-	"when you set expects_reply, types his answer back into this session as a message starting \"[Ben, via Eldar]\". " +
-	"Treat that message as Ben's own reply.\n\n" +
-	"USE IT when Ben would want to know now while he's away from the terminal: you're blocked on a decision only he " +
+const notifyDescription = "Message Kevin through Eldar, his chief-of-staff agent. Eldar tells him in his chat (a push to his phone) and, " +
+	"when you set expects_reply, types his answer back into this session as a message starting \"[Kevin, via Eldar]\". " +
+	"Treat that message as Kevin's own reply.\n\n" +
+	"USE IT when Kevin would want to know now while he's away from the terminal: you're blocked on a decision only he " +
 	"can make, a long task finished, a deploy or build went green or red, or he asked to be notified.\n\n" +
 	"DON'T overuse it: an unneeded ping costs his attention. Skip routine progress, anything he's clearly watching " +
 	"live, and trivial completions. One or two lines, leading with what he'd act on (\"deploy failed: 2 auth tests\" " +
@@ -135,8 +135,8 @@ func Notify(origin, text string) error {
 	return newClient().relay(context.Background(), relayEvent{Text: text, Origin: origin})
 }
 
-// TellAgent is `supervisor tell-agent`: Eldar passes Ben's answer to another
-// Claude session by typing "[Ben, via Eldar] <message>" into its herdr pane.
+// TellAgent is `supervisor tell-agent`: Eldar passes Kevin's answer to another
+// Claude session by typing "[Kevin, via Eldar] <message>" into its herdr pane.
 // It checks the pane still holds that session, following it if it moved;
 // `herdr agent prompt` refuses an agent sitting at an approval or question
 // prompt, so this never answers a dialog.
@@ -167,7 +167,7 @@ func TellAgent(pane, session, msg string) (string, error) {
 		}
 		pane = found
 	}
-	out, err := exec.Command("herdr", "agent", "prompt", pane, "[Ben, via Eldar] "+msg).CombinedOutput()
+	out, err := exec.Command("herdr", "agent", "prompt", pane, "[Kevin, via Eldar] "+msg).CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("herdr agent prompt: %v: %s", err, strings.TrimSpace(string(out)))
 	}

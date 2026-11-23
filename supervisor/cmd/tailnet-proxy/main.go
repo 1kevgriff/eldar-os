@@ -1,4 +1,4 @@
-// tailnet-proxy puts one web page from Eldar's VM on Ben's tailnet: it joins
+// tailnet-proxy puts one web page from Eldar's VM on Kevin's tailnet: it joins
 // as its own node (tsnet) and reverse-proxies HTTPS (WebSockets included) to
 // a URL only the host can reach, such as the stream of the VM's Chrome. Only
 // untagged devices of the allowed tailnet user get through; the VM itself
