@@ -40,6 +40,17 @@ let
           case "$a" in --repo=*) owner=$(owner_of "''${a#--repo=}"); break ;; -R?*) owner=$(owner_of "''${a#-R}"); break ;; esac
           prev=$a
         done
+        if [ -z "$owner" ]; then  # --owner X, and `gh repo list <owner>`
+          prev=
+          for a in "$@"; do
+            case "$prev" in --owner) owner=$a; break ;; esac
+            case "$a" in --owner=*) owner=''${a#--owner=}; break ;; esac
+            prev=$a
+          done
+          if [ -z "$owner" ] && [ "''${1:-}" = repo ] && [ "''${2:-}" = list ] && [ -n "''${3:-}" ] && [ "''${3#-}" = "''${3:-}" ]; then
+            owner=$3
+          fi
+        fi
         [ -n "$owner" ] || [ -z "''${GH_REPO:-}" ] || owner=$(owner_of "$GH_REPO")
         if [ -z "$owner" ] && [ "''${1:-}" = api ]; then  # repos/<owner>/..., orgs/<owner>, users/<owner>
           for a in "$@"; do
