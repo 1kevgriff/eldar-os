@@ -28,7 +28,7 @@ TAILNET=${TAILNET:-$(tailscale status --json 2>/dev/null | jq -r '.MagicDNSSuffi
 HOOK_URL=https://eldar-os-hook.$TAILNET/github
 SECRETS_CHECKOUT=${SECRETS_CHECKOUT:-../eldar-os-secrets}
 SOPS=${SOPS:-$HOME/.local/share/eldar-os-vm/bin/sops}
-RULESET_NAME="main: only Ben merges"
+RULESET_NAME="main: only Kevin merges"
 
 check=false
 [ "${1:-}" = --check ] && check=true
