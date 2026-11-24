@@ -152,6 +152,7 @@ func (s *Supervisor) Run(ctx context.Context) error {
 	}
 	logf("profiles: %v", s.profiles.Names())
 	go s.sweepBrowsers(ctx)
+	go s.pollExternalWatches(ctx)
 	if s.cfg.IMessagePath != "" {
 		go s.runIMessage(ctx)
 		if s.cfg.IMessageWebhook != "" {

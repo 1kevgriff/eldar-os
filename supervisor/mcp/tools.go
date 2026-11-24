@@ -386,11 +386,13 @@ func (s *server) toolList() []tool {
 				"this machine or this VM). Kevin approves it by merging; the machine applies it within seconds. When " +
 				"it's applied (or the apply fails, or the PR is closed unmerged), a message starting \"[eldar-os]\" " +
 				"arrives in this session as your next prompt. Don't poll or wait in a loop: carry on, or stop " +
-				"and wait for that message.",
+				"and wait for that message. Also works on another owner's repo (repo as owner/name, e.g. a work " +
+				"repo with an ambient token): you're told of each new review and when it's merged or closed, in a " +
+				"message starting \"[watch]\". Merged is not deployed there.",
 			Schema: func([]string, string) map[string]any {
 				return object(map[string]any{
 					"pr":   map[string]any{"type": "number", "description": "The pull request number."},
-					"repo": map[string]any{"type": "string", "description": "Repo name; defaults to the staging repo."},
+					"repo": map[string]any{"type": "string", "description": "Repo name, or owner/name for another owner's repo; defaults to the staging repo."},
 				}, "pr")
 			},
 			run: s.watchPRTool,

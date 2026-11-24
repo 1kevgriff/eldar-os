@@ -26,6 +26,9 @@ import (
 
 var validRev = regexp.MustCompile(`^[0-9a-f]{7,40}$`)
 
+// validRepo: owner/name as GitHub allows them.
+var validRepo = regexp.MustCompile(`^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$`)
+
 type Watch struct {
 	ID        int    `json:"id"`
 	Repo      string `json:"repo"` // owner/name
@@ -37,6 +40,11 @@ type Watch struct {
 	// The last failed revision reported to the session, so one failure
 	// isn't reported twice.
 	FailedRev string `json:"failedRev,omitempty"`
+	// External: a repo outside this system, polled with its owner's
+	// ambient token (watch_external.go); LastReview is the newest review
+	// already reported.
+	External   bool  `json:"external,omitempty"`
+	LastReview int64 `json:"lastReview,omitempty"`
 }
 
 type Watches struct {
@@ -89,6 +97,17 @@ func (w *Watches) Remove(id int) {
 	w.saveLocked()
 }
 
+func (w *Watches) SetLastReview(id int, review int64) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for i := range w.list {
+		if w.list[i].ID == id {
+			w.list[i].LastReview = review
+		}
+	}
+	w.saveLocked()
+}
+
 func (w *Watches) SetFailed(id int, rev string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -122,10 +141,6 @@ func (s *Supervisor) handleWatchPR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	g := s.cfg.GitHub
-	if !g.configured() {
-		sendJSON(w, 503, map[string]any{"error": "No GitHub App is configured on this supervisor.", "outcome": OutBadRequest})
-		return
-	}
 	if !validPane.MatchString(b.PaneID) {
 		b.PaneID = ""
 	}
@@ -135,7 +150,26 @@ func (s *Supervisor) handleWatchPR(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	full, err := g.fullName(ctx, b.Repo)
+	// owner/name outside the App's repos: an external watch, if the owner
+	// has an ambient token (watch_external.go).
+	var full string
+	var err error
+	if g.configured() {
+		full, err = g.fullName(ctx, b.Repo)
+	} else {
+		err = fmt.Errorf("no GitHub App is configured on this supervisor")
+	}
+	if err != nil && validRepo.MatchString(b.Repo) {
+		x, pr, xerr := s.watchExternal(ctx, b.Repo, Watch{PR: b.PR, SessionID: b.SessionID, PaneID: b.PaneID})
+		if xerr != nil {
+			sendJSON(w, 400, map[string]any{"error": xerr.Error(), "outcome": OutBadRequest})
+			return
+		}
+		s.audit.Log(AuditEntry{RequestID: s.nextID(), Action: fmt.Sprintf("watch %s#%d", x.Repo, b.PR), Decision: "allow",
+			DecisionReason: "the session is told of reviews, the merge or the close", SessionID: b.SessionID, Mode: "normal"})
+		sendJSON(w, 200, map[string]any{"id": x.ID, "repo": x.Repo, "pr": b.PR, "title": pr.Title, "state": pr.State, "merged": pr.Merged, "external": true})
+		return
+	}
 	if err != nil {
 		sendJSON(w, 400, map[string]any{"error": err.Error(), "outcome": OutBadRequest})
 		return
@@ -184,6 +218,9 @@ func (s *Supervisor) checkWatches(rev string, revs map[string]string, ok bool, d
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	for _, x := range s.watches.All() {
+		if x.External {
+			continue // polled with its owner's token (watch_external.go)
+		}
 		rev := rev
 		if len(revs) > 0 {
 			if rev = revs[strings.ToLower(x.Repo)]; rev == "" {
