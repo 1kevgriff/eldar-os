@@ -44,6 +44,12 @@
       if [ -n "''${AZURE_SUBSCRIPTION_ID:-}" ]; then "$real" account set -s "$AZURE_SUBSCRIPTION_ID" || exit 1; fi
       "$real" "$@"
     '';
+    seqcli = pkgs.callPackage ../../packages/seqcli.nix { };
+    # Kevin's Seq query helper, reading the server and key from ambient env.
+    seqq = pkgs.writeShellScriptBin "seqq" ''
+      export PATH=${lib.makeBinPath [ seqcli pkgs.coreutils pkgs.gawk pkgs.gnused ]}:$PATH
+      ${builtins.readFile ./seqq.sh}
+    '';
     plannotator-tui = pkgs.runCommand "plannotator-tui" { } "mkdir -p $out/bin; ln -s ${herdr-annotate}/bin/plannotator-tui.exe $out/bin/plannotator-tui";
     # Eldar's two channels (supervisor/mcp): Kevin's chat, and notify_kevin events
     # from other agents, scripts and cron. Only Eldar's session loads them.
@@ -300,7 +306,7 @@
       dotnet-sdk_10 # SOS (SoS.v2 targets net10.0)
       (python3.withPackages (ps: with ps; [ numpy scipy pillow rectpack ]))
       # cloud and dev CLIs
-      awscli2 (lib.hiPrio az) azure-cli kubectl heroku wrangler duckdb codex
+      awscli2 (lib.hiPrio az) azure-cli seqcli seqq kubectl heroku wrangler duckdb codex
       # databases (SOS: Azure SQL, Atlas)
       sqlcmd mongosh
       # 3D-printing pipeline
