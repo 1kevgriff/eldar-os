@@ -27,6 +27,23 @@
     herdr = pkgs.callPackage ../../packages/herdr.nix { };
     herdr-annotate = pkgs.callPackage ../../packages/herdr-annotate.nix { };
     # The release binary herdr-annotate ships, under its own name for the PATH.
+    # az signs in as the service principal its directory's ambient credentials
+    # name (AZURE_CLIENT_ID/_SECRET/_TENANT_ID), into a config dir that lives
+    # for one call: no token cache stays behind, and the secret is read from a
+    # file descriptor, never argv. A deliberate AZURE_CONFIG_DIR, or no
+    # credentials, runs az as is.
+    az = pkgs.writeShellScriptBin "az" ''
+      real=${pkgs.azure-cli}/bin/az
+      if [ -n "''${AZURE_CONFIG_DIR:-}" ] || [ -z "''${AZURE_CLIENT_ID:-}" ] || [ -z "''${AZURE_CLIENT_SECRET:-}" ] || [ -z "''${AZURE_TENANT_ID:-}" ]; then
+        exec "$real" "$@"
+      fi
+      AZURE_CONFIG_DIR=$(mktemp -d) || exit 1
+      export AZURE_CONFIG_DIR AZURE_CORE_COLLECT_TELEMETRY=false AZURE_CORE_NO_COLOR=true
+      trap 'rm -rf "$AZURE_CONFIG_DIR"' EXIT
+      "$real" login --service-principal -u "$AZURE_CLIENT_ID" --tenant "$AZURE_TENANT_ID"         -p @<(printf %s "$AZURE_CLIENT_SECRET") --output none --only-show-errors || exit 1
+      if [ -n "''${AZURE_SUBSCRIPTION_ID:-}" ]; then "$real" account set -s "$AZURE_SUBSCRIPTION_ID" || exit 1; fi
+      "$real" "$@"
+    '';
     plannotator-tui = pkgs.runCommand "plannotator-tui" { } "mkdir -p $out/bin; ln -s ${herdr-annotate}/bin/plannotator-tui.exe $out/bin/plannotator-tui";
     # Eldar's two channels (supervisor/mcp): Kevin's chat, and notify_kevin events
     # from other agents, scripts and cron. Only Eldar's session loads them.
@@ -283,7 +300,7 @@
       dotnet-sdk_10 # SOS (SoS.v2 targets net10.0)
       (python3.withPackages (ps: with ps; [ numpy scipy pillow rectpack ]))
       # cloud and dev CLIs
-      awscli2 kubectl heroku wrangler duckdb codex
+      awscli2 (lib.hiPrio az) azure-cli kubectl heroku wrangler duckdb codex
       # databases (SOS: Azure SQL, Atlas)
       sqlcmd mongosh
       # 3D-printing pipeline
