@@ -224,6 +224,27 @@
       };
     };
 
+    # Kevin's work morning digest: a script in Eldar's private workspace
+    # (read-only queries, run in that directory's ambient environment) whose
+    # result reaches Eldar through `supervisor notify`. Daily at 8:00 AM
+    # Eastern; Persistent catches up a run missed while the VM was down.
+    systemd.user.services.sos-digest = {
+      description = "Work morning digest for Kevin";
+      unitConfig.ConditionUser = "eldar";
+      environment.PATH = lib.mkForce "/run/wrappers/bin:/etc/profiles/per-user/eldar/bin:/run/current-system/sw/bin";
+      serviceConfig = {
+        Type = "oneshot";
+        WorkingDirectory = "/home/eldar/workspace/sos";
+        ExecStart = "/run/current-system/sw/bin/direnv exec /home/eldar/workspace/sos /home/eldar/workspace/sos/bin/morning-digest";
+        TimeoutStartSec = "10min";
+      };
+    };
+    systemd.user.timers.sos-digest = {
+      wantedBy = [ "timers.target" ];
+      unitConfig.ConditionUser = "eldar";
+      timerConfig = { OnCalendar = "*-*-* 08:00:00 America/New_York"; Persistent = true; };
+    };
+
     # herdr plugins, linked from the store instead of `herdr plugin install`
     # (which downloads into a mutable checkout). Their keybindings are
     # preferences, in the dotfiles' herdr config. Re-linking a new version
