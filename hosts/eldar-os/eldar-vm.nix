@@ -232,6 +232,9 @@
       description = "Work morning digest for Kevin";
       unitConfig.ConditionUser = "eldar";
       environment.PATH = lib.mkForce "/run/wrappers/bin:/etc/profiles/per-user/eldar/bin:/run/current-system/sw/bin";
+      # Login shells get this from programs.direnv; without it direnv ignores
+      # the workspace whitelist and refuses the .envrc as not allowed.
+      environment.DIRENV_CONFIG = "/etc/direnv";
       serviceConfig = {
         Type = "oneshot";
         WorkingDirectory = "/home/eldar/workspace/sos";
