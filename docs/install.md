@@ -128,6 +128,29 @@ scripts/verify
 XFS on LUKS with reflinks, the fallback bootloader, secrets decrypting, and that
 LUKS was unlocked by the key disk.
 
+**When eldar-os runs as this VM for good** (a rented server whose boot disk you
+can't change), start it when the host boots. Without this, a host reboot or
+power loss leaves eldar-os down until someone runs `scripts/vm start`. It needs
+lingering for the user (`sudo loginctl enable-linger $USER`), so the user's
+systemd starts at boot:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/eldar-os-vm-boot.service <<'EOF'
+[Unit]
+Description=Start the eldar-os VM when the host boots
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c "systemctl --user is-active -q eldar-os-vm || exec %h/eldar-os/scripts/vm start"
+
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload && systemctl --user enable eldar-os-vm-boot.service
+```
+
 ## 7. Ben's LUKS passphrase (Ben, interactively)
 
 The disk only has the VM key until this runs. Needed before booting on bare metal.
