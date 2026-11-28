@@ -77,7 +77,7 @@ from playwright.sync_api import sync_playwright
 url, out = sys.argv[1], sys.argv[2]
 phone, desktop = ((390, 844), 3), ((1280, 820), 2)
 shots = [("web-approvals", "approvals", phone), ("web-sessions", "sessions", phone),
-         ("web-chat", "chat", phone), ("web-desktop", "approvals", desktop)]
+         ("web-chat", "chat", phone), ("web-jira", "jira", phone), ("web-desktop", "approvals", desktop)]
 with sync_playwright() as p:
     b = p.chromium.launch()
     for name, tab, ((w, h), dpr) in shots:

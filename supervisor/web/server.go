@@ -183,6 +183,9 @@ func (s *server) routes(auth bool) http.Handler {
 	mux.HandleFunc("POST /api/mcp/callback", s.mcpCallback)
 	mux.HandleFunc("DELETE /api/mcp/{name}", s.mcpRemove)
 	mux.HandleFunc("POST /api/herdr/launch", s.herdrLaunch)
+	mux.HandleFunc("GET /api/jira", s.jiraView)
+	mux.HandleFunc("GET /api/jira/{key}/transitions", s.jiraAction)
+	mux.HandleFunc("POST /api/jira/{key}/{action}", s.jiraAction)
 	mux.HandleFunc("POST /api/herdr/close", s.herdrClose)
 	mux.HandleFunc("POST /api/herdr/shell", s.herdrShell)
 	mux.HandleFunc("POST /api/hosts/{name}/test", s.hostTest)
@@ -577,6 +580,49 @@ func (s *server) herdrLaunch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, out)
+}
+
+func (s *server) jiraView(w http.ResponseWriter, r *http.Request) {
+	q := ""
+	if r.URL.Query().Get("refresh") == "1" {
+		q = "?refresh=1"
+	}
+	raw, err := s.cfg.Client.Jira(r.Context(), "GET", q, nil)
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	writeJSON(w, 200, raw)
+}
+
+// jiraAction relays a ticket's transitions list or one of its actions; the
+// admin API validates the key and the body.
+func (s *server) jiraAction(w http.ResponseWriter, r *http.Request) {
+	key := url.PathEscape(r.PathValue("key"))
+	if r.Method == http.MethodGet {
+		raw, err := s.cfg.Client.Jira(r.Context(), "GET", "/"+key+"/transitions", nil)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		writeJSON(w, 200, raw)
+		return
+	}
+	action := r.PathValue("action")
+	if action != "transition" && action != "assign" && action != "start" {
+		writeJSON(w, 404, map[string]string{"error": "Not found"})
+		return
+	}
+	body, ok := readBody[map[string]any](w, r)
+	if !ok {
+		return
+	}
+	raw, err := s.cfg.Client.Jira(r.Context(), "POST", "/"+key+"/"+action, body)
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	writeJSON(w, 200, raw)
 }
 
 func (s *server) herdrShell(w http.ResponseWriter, r *http.Request) {

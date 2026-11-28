@@ -46,6 +46,7 @@ func (s *Supervisor) Snapshot() api.State {
 		Crons:         s.crons.List(),
 		Devices:       s.devices.List(),
 		Viewers:       s.n.Subscribers(),
+		Jira:          s.cfg.Jira != nil,
 	}
 }
 
@@ -597,6 +598,7 @@ func (s *Supervisor) adminHandler() http.Handler {
 		sendJSON(w, 200, out)
 	})
 	mux.HandleFunc("GET /admin/terminal", s.handleTerminal)
+	s.jiraRoutes(mux)
 
 	// Chat with Eldar.
 	mux.HandleFunc("GET /admin/chat", func(w http.ResponseWriter, r *http.Request) {

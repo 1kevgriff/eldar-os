@@ -217,6 +217,14 @@ func (c *Client) LaunchClaude(ctx context.Context, in LaunchInput) (map[string]s
 	return out, err
 }
 
+// Jira calls the admin API's Jira routes (path after /admin/jira, e.g.
+// "/SOS-1/transition") and returns the JSON as is; the web UI renders it.
+func (c *Client) Jira(ctx context.Context, method, path string, body any) (json.RawMessage, error) {
+	var out json.RawMessage
+	err := c.do(ctx, method, "/admin/jira"+path, body, &out)
+	return out, err
+}
+
 // OpenShell opens a new tab with a plain shell in a herdr workspace.
 func (c *Client) OpenShell(ctx context.Context, workspaceID, name, cwd string) (map[string]string, error) {
 	out := map[string]string{}

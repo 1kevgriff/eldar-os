@@ -117,6 +117,7 @@ func state() api.State {
 			ProfileName: "Work", Host: "mac", Space: "Work", CreatedAt: ms(-4 * time.Minute), ExpiresAt: ms(26 * time.Minute), Channels: 1}},
 		Crons:   []api.Cron{},
 		Viewers: 1,
+		Jira:    true,
 	}
 }
 
@@ -246,6 +247,7 @@ func (d *demo) handler() http.Handler {
 		send(w, map[string]any{"sessions": []any{map[string]any{"session": "corp", "signedIn": true}}, "profiles": state().AwsProfiles})
 	})
 	mux.HandleFunc("GET /admin/terminal", d.terminal)
+	jiraRoutes(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { send(w, map[string]any{"ok": true}) })
 	return mux
 }

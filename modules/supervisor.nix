@@ -96,6 +96,16 @@ in
         changes; a new host's key restarts the supervisor (restartUnits).
       '';
     };
+    jiraFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        jira.json: the admin UIs' Jira tab (supervisor/server/jira.go): the
+        site URL, project key, scrum board, the ambient profile and variables
+        holding the Jira credentials, and the VM directory with plan files.
+        Private (it names a work site), so not in this repo.
+      '';
+    };
     awsConfig = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -317,6 +327,8 @@ in
         SUPERVISOR_BOT_GROUP = "supervisor-bot";
       } // lib.optionalAttrs (cfg.hostsFile != null) {
         SUPERVISOR_HOSTS = cfg.hostsFile;
+      } // lib.optionalAttrs (cfg.jiraFile != null) {
+        SUPERVISOR_JIRA = cfg.jiraFile;
       } // lib.optionalAttrs (cfg.ambientFile != null) {
         SUPERVISOR_AMBIENT = cfg.ambientFile;
       } // lib.optionalAttrs (cfg.awsConfig != null) {

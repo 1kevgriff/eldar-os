@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -35,6 +36,7 @@ import (
 //	                            iMessage through BlueBubbles (server/imessage.go): config,
 //	                            password, and the address its webhook reaches (optional)
 //	SUPERVISOR_HOSTS            hosts.json: remote hosts agents may run commands on
+//	SUPERVISOR_JIRA             jira.json: the admin UIs' Jira tab (server.JiraConfig); unset = none
 //	SUPERVISOR_HOST_KEYS        directory of their private keys, one file per host name
 //	SUPERVISOR_GITHUB_APP_ID, SUPERVISOR_GITHUB_INSTALLATION_ID,
 //	SUPERVISOR_GITHUB_APP_KEY (key file), SUPERVISOR_GITHUB_REPOS (comma-separated names)
@@ -99,6 +101,19 @@ func runServe(args []string) {
 		os.Exit(1)
 	}
 	cfg.HostsFile = hosts
+	if f := os.Getenv("SUPERVISOR_JIRA"); f != "" {
+		var jc server.JiraConfig
+		j, err := os.ReadFile(f)
+		if err == nil {
+			err = json.Unmarshal(j, &jc)
+		}
+		// Optional: without a usable file there is just no Jira tab.
+		if err != nil || jc.URL == "" || jc.Project == "" || jc.Profile == "" {
+			fmt.Fprintln(os.Stderr, "supervisor: no Jira tab: SUPERVISOR_JIRA needs url, project and profile:", err)
+		} else {
+			cfg.Jira = &jc
+		}
+	}
 	cfg.GitHub = &server.GitHubApp{
 		AppID:          os.Getenv("SUPERVISOR_GITHUB_APP_ID"),
 		InstallationID: os.Getenv("SUPERVISOR_GITHUB_INSTALLATION_ID"),

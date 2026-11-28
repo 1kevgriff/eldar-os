@@ -127,6 +127,7 @@ type State struct {
 	Crons         []Cron         `json:"crons"`
 	Devices       []Device       `json:"devices"`
 	Viewers       int            `json:"viewers"`
+	Jira          bool           `json:"jira"` // the Jira tab is configured
 }
 
 // ArcProfile is an Arc profile on Kevin's Mac, as last read by the proxy.

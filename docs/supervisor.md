@@ -166,6 +166,22 @@ revoke (`DELETE /admin/browser-grants/{id}`) or lockdown: the channel closes
 window, the web UI refuses that host's tailnet device, so a page an agent
 drives can't approve anything.
 
+## Jira tab
+
+Optional (`jiraFile`, a private `jira.json`): the web UI's Jira tab shows one
+project's tickets assigned to Kevin and not done, and the active sprint of a
+scrum board, sorted into the board's columns. Tickets with a plan file in
+`plansDir` (in the VM, `<KEY>.md`) are marked. The supervisor calls Jira itself
+with the credentials in an ambient profile (`profile`, `emailVar`,
+`tokenVar`), the same ones that project's sessions get, so nothing new is
+stored; the view is cached for a minute. From the tab Kevin can move a ticket
+(its Jira transitions), assign it to himself or no one, and **Start** it: a
+relay event asking Eldar to take it on, plan first. Every write is audited, a
+ticket outside the project is refused before Jira is called, and lockdown
+refuses the tab, because it uses credentials. Admin API: `GET /admin/jira`,
+`GET /admin/jira/{key}/transitions`, `POST /admin/jira/{key}/transition`,
+`/assign`, `/start`.
+
 ## Chat, relay and Eldar's channels
 
 Eldar, the chief-of-staff session, loads two Claude channels from the

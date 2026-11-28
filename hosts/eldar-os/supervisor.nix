@@ -15,6 +15,8 @@
     # AWS profiles (one SSO session; `supervisor aws-login` signs in).
     awsConfig = "/var/lib/eldar-os/secrets/supervisor/aws-config";
     ambientFile = "/var/lib/eldar-os/secrets/supervisor/ambient.yaml";
+    # The web UI's Jira tab: Kevin's work tickets and sprint.
+    jiraFile = "/var/lib/eldar-os/secrets/supervisor/jira.json";
     web = {
       enable = true;
       hostname = "supervisor";

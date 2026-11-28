@@ -51,6 +51,7 @@ type Config struct {
 	DevicesPath               string // paired devices (devices.go); "" = kept in memory only
 	TerminalSSH               TerminalSSH            // live terminals into the VM
 	GitHub                    *GitHubApp             // Eldar's GitHub App; nil = none
+	Jira                      *JiraConfig            // the admin UIs' Jira tab (jira.go); nil = none
 	Hosts                     map[string]*RemoteHost // remote hosts by name (hosts.go); "mac" is Kevin's Mac
 	HostsFile                 *HostsFile             // if set, the hosts come from here instead, re-read on change
 	HostAllowPath             string
@@ -97,6 +98,8 @@ type Supervisor struct {
 		Runner
 		ReadFile(ctx context.Context, path string) (string, error)
 	}
+
+	jira jiraState
 
 	reqID          atomic.Int64
 	mu             sync.Mutex

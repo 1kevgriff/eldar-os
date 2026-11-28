@@ -254,6 +254,8 @@ function renderChrome() {
   const n = d.pending.length;
   $("#count-approvals").textContent = n || "";
   $("#count-sessions").textContent = S.sessions.length || "";
+  $("#tab-jira").hidden = !d.jira;
+  $("#count-jira").textContent = S.jira?.view?.mine?.length || "";
   const g = d.grants.length + (d.browserGrants || []).length;
   $("#count-grants").textContent = g || "";
   $("#count-settings").textContent = d.mcp?.pending?.length || "";
@@ -290,7 +292,7 @@ function renderMain() {
   if (!S.data) {
     html = `<div class="empty"><div class="big-sigil">✦</div><h2>Connecting…</h2><p>${esc(S.downMsg || "Reaching the supervisor")}</p></div>`;
   } else {
-    html = banner() + ({ approvals: viewApprovals, sessions: viewSessions, grants: viewGrants, settings: viewSettings, activity: viewActivity }[S.tab] || viewApprovals)();
+    html = banner() + ({ approvals: viewApprovals, sessions: viewSessions, jira: viewJira, grants: viewGrants, settings: viewSettings, activity: viewActivity }[S.tab] || viewApprovals)();
   }
   if (setHTML(main, "main", html)) tick();
   renderBulk();
@@ -484,6 +486,62 @@ function viewSessions() {
       </button>`).join("") + `</div>`;
   }
   return out;
+}
+
+// jira: the project's tickets (yours, and the active sprint's board)
+async function loadJira(refresh) {
+  S.jira = { ...(S.jira || {}), loading: true };
+  if (S.tab === "jira") renderMain();
+  try { S.jira = { view: await api("GET", "/api/jira" + (refresh ? "?refresh=1" : "")) }; }
+  catch (e) { S.jira = { ...(S.jira || {}), loading: false, error: e.message }; }
+  if (S.tab === "jira") renderMain();
+  if (S.data) renderChrome();
+}
+
+function jiraRow(i, url) {
+  const meta = [i.type, i.assignee || "Unassigned", i.priority].filter(Boolean).map(esc).join(" · ");
+  return `<div class="jira-row">
+    <div class="jira-main">
+      <div class="t"><a href="${esc(url)}/browse/${esc(i.key)}" target="_blank" rel="noopener noreferrer" class="jira-key">${esc(i.key)}</a> ${esc(i.summary)}</div>
+      <div class="s"><span class="pill pill-none">${esc(i.status)}</span> ${meta}${i.hasPlan ? ` · <span class="ok">✎ plan</span>` : ""}</div>
+    </div>
+    <div class="jira-acts">
+      <button class="btn btn-small btn-accent" data-action="jira-start" data-key="${esc(i.key)}" title="Ask Eldar to start (plan first)">Start</button>
+      <button class="btn btn-small btn-ghost" data-action="jira-move" data-key="${esc(i.key)}">Move</button>
+      ${i.mine ? `<button class="btn btn-small btn-ghost" data-action="jira-assign" data-key="${esc(i.key)}" data-to="none">Unassign</button>`
+               : `<button class="btn btn-small btn-ghost" data-action="jira-assign" data-key="${esc(i.key)}" data-to="me">Take</button>`}
+    </div></div>`;
+}
+
+function viewJira() {
+  const j = S.jira;
+  if (!j?.view && !j?.error) { if (!j?.loading) setTimeout(() => loadJira()); return `<div class="empty"><h2>Loading Jira…</h2></div>`; }
+  const head = `<div class="section-head"><h1>Jira${j.view ? ` · ${esc(j.view.project)}` : ""}</h1><button class="btn btn-small btn-ghost" data-action="jira-refresh">${j.loading ? "Refreshing…" : "Refresh"}</button></div>`;
+  if (!j.view) return head + `<div class="banner down">⚠ ${esc(j.error)}</div>`;
+  const v = j.view;
+  let out = head + (j.error ? `<div class="banner down">⚠ ${esc(j.error)}</div>` : "");
+  const groups = {};
+  for (const i of v.mine) (groups[i.status] ||= []).push(i);
+  out += `<div class="space-head"><span class="space-name">Yours</span><span class="faint">· not done</span></div>`;
+  out += Object.keys(groups).length
+    ? Object.entries(groups).map(([st, is]) => `<div class="jira-group">${esc(st)} <span class="faint">${is.length}</span></div><div class="card list">${is.map((i) => jiraRow(i, v.url)).join("")}</div>`).join("")
+    : `<div class="card list"><p class="dim" style="padding:12px;margin:0">Nothing assigned to you.</p></div>`;
+  if (v.sprint) {
+    const end = v.sprint.endDate ? new Date(v.sprint.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+    out += `<div class="space-head"><span class="space-name">${esc(v.sprint.name)}</span>${end ? `<span class="faint">· ends ${esc(end)}</span>` : ""}</div>`;
+    out += v.sprint.columns.map((c) => `<details class="jira-col"${c.issues.length && !/^done$/i.test(c.name) ? " open" : ""}>
+      <summary><span>${esc(c.name)}</span> <span class="faint">${c.issues.length}</span></summary>
+      <div class="card list">${c.issues.map((i) => jiraRow(i, v.url)).join("") || `<p class="dim" style="padding:12px;margin:0">Empty.</p>`}</div></details>`).join("");
+  }
+  return out + `<p class="faint" style="margin-top:14px">Updated <span data-ago="${v.at}"></span>. Start asks Eldar to plan first; Move and Take change Jira as you.</p>`;
+}
+
+function jiraMoveSheet() {
+  const sh = S.sheet;
+  if (!sh.transitions) return `<h2>Move ${esc(sh.key)}</h2><p class="lead">${sh.error ? "⚠ " + esc(sh.error) : "Loading…"}</p>`;
+  return `<h2>Move ${esc(sh.key)}</h2><p class="lead">Changes the ticket in Jira.</p><div class="opts">` +
+    (sh.transitions.map((t) => `<button class="opt" data-action="jira-transition" data-key="${esc(sh.key)}" data-tid="${esc(t.id)}" data-name="${esc(t.name)}"><span class="o-ico">→</span><span><div class="o-t">${esc(t.name)}</div>${t.to && t.to !== t.name ? `<div class="o-s">to ${esc(t.to)}</div>` : ""}</span></button>`).join("")
+      || `<p class="dim">No moves available.</p>`) + `</div>`;
 }
 
 // herdr block + close for the session sheet
@@ -895,7 +953,7 @@ function renderSheet() {
   const html = k === "mode" ? modeSheet() : k === "lockdown" ? lockdownSheet() : k === "session" ? sessionSheet(S.sheet.id)
     : k === "grant" ? editorSheet() : k === "push" ? S.sheet.html : k === "launch" ? launchSheet()
     : k === "audit" ? auditSheet(S.sheet.entry)
-    : k === "hpane" ? hpaneSheet(S.sheet.pane) : k === "close-confirm" ? closeConfirmSheet(S.sheet.pane) : "";
+    : k === "jira-move" ? jiraMoveSheet() : k === "hpane" ? hpaneSheet(S.sheet.pane) : k === "close-confirm" ? closeConfirmSheet(S.sheet.pane) : "";
   if (setHTML($("#sheet"), "sheet", html)) tick();
 }
 
@@ -1182,6 +1240,7 @@ function setTab(tab) {
   render();
   window.scrollTo({ top: 0 });
   if (tab === "activity") loadAudit();
+  if (tab === "jira") loadJira();
 }
 
 document.addEventListener("click", async (ev) => {
@@ -1195,6 +1254,30 @@ document.addEventListener("click", async (ev) => {
   const sid = el.dataset.id;
   switch (a) {
     case "decide": return decide([id], el.dataset.d);
+    case "jira-refresh": return loadJira(true);
+    case "jira-start": {
+      const k = el.dataset.key;
+      await act(api("POST", `/api/jira/${encodeURIComponent(k)}/start`, {}), `Asked Eldar to start ${k}`);
+      return;
+    }
+    case "jira-assign": {
+      const k = el.dataset.key, to = el.dataset.to;
+      if (await act(api("POST", `/api/jira/${encodeURIComponent(k)}/assign`, { to }), to === "me" ? `${k} is yours` : `${k} unassigned`)) loadJira(true);
+      return;
+    }
+    case "jira-move": {
+      const k = el.dataset.key;
+      openSheet({ kind: "jira-move", key: k });
+      try { const t = (await api("GET", `/api/jira/${encodeURIComponent(k)}/transitions`)).transitions; if (S.sheet?.key === k) S.sheet.transitions = t; }
+      catch (e) { if (S.sheet?.key === k) S.sheet.error = e.message; }
+      return renderSheet();
+    }
+    case "jira-transition": {
+      const k = el.dataset.key;
+      closeSheet();
+      if (await act(api("POST", `/api/jira/${encodeURIComponent(k)}/transition`, { id: el.dataset.tid, name: el.dataset.name }), `${k}: ${el.dataset.name}`)) loadJira(true);
+      return;
+    }
     case "bulk": return decide([...S.marks], el.dataset.d);
     case "mark": S.marks.has(id) ? S.marks.delete(id) : S.marks.add(id); return renderMain();
     case "mark-all":

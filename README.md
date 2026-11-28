@@ -71,6 +71,10 @@ are marked where they appear.
   web UI you can start one, watch its status, or take over its terminal from
   your phone, with any approval it's waiting on shown above it. Eldar is the one you chat with: other agents reach you through
   it, and it carries your replies back.
+- **Your tickets next to your agents.** An optional Jira tab shows your open
+  tickets and the active sprint's board, marks the ones an agent has a plan
+  for, and lets you move or take a ticket, or ask Eldar to start on one (it
+  plans first). It reads Jira with credentials from an ambient profile.
 - **It changes its own system, quickly.** Eldar opens PRs against this repo
   with its own GitHub App. Only you can merge. A signed webhook tells the
   machine to fetch `main`; it checks that every new commit is signed by an
@@ -113,6 +117,8 @@ runs, and [docs/decisions/](docs/decisions/) for why it's built this way.
 | The web UI on a desktop | TUI: sessions and their grants |
 | ![A Claude session's terminal in the web UI](docs/screenshots/web-terminal-desktop.png) | ![TUI: the activity log](docs/screenshots/tui-activity.png) |
 | A Claude session's terminal, waiting on an approval | TUI: the activity log (allowed, denied, granted) |
+| ![The Jira tab on a phone](docs/screenshots/web-jira.png) | |
+| The Jira tab: your tickets and the sprint board | |
 
 ## The repo
 
